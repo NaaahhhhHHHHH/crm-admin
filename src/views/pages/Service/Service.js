@@ -525,6 +525,7 @@ const ServiceTable = () => {
                           <Select.Option value="select">Select</Select.Option>
                           <Select.Option value="radio">Radio</Select.Option>
                           <Select.Option value="checkbox">Checkbox</Select.Option>
+                          <Select.Option value="file">File</Select.Option>
                         </Select>
                       </Form.Item>
                     </Col>

@@ -1,5 +1,18 @@
 import React, { useEffect, useState } from 'react'
-import { Modal, Form, Input, Button, Select, Checkbox, Radio, Row, Col, message } from 'antd'
+import {
+  Modal,
+  Form,
+  Input,
+  Button,
+  Select,
+  Checkbox,
+  Radio,
+  Row,
+  Col,
+  message,
+  Upload,
+} from 'antd'
+import { UploadOutlined } from '@ant-design/icons'
 
 const DynamicFormModal = ({ title, visible, onClose, formDataArray, onSubmit }) => {
   const [form] = Form.useForm()
@@ -41,6 +54,15 @@ const DynamicFormModal = ({ title, visible, onClose, formDataArray, onSubmit }) 
     whiteSpace: 'pre-wrap',
     wordWrap: 'break-word',
     maxWidth: '95%',
+  }
+
+  const handleFileChange = (info) => {
+    // You can customize how the file is handled here
+    if (info.file.status === 'done') {
+      message.success(`${info.file.name} file uploaded successfully`)
+    } else if (info.file.status === 'error') {
+      message.error(`${info.file.name} file upload failed`)
+    }
   }
 
   return (
@@ -131,6 +153,24 @@ const DynamicFormModal = ({ title, visible, onClose, formDataArray, onSubmit }) 
                       </Checkbox>
                     ))}
                   </Checkbox.Group>
+                </Form.Item>
+              )
+            case 'file':
+              return (
+                <Form.Item
+                  key={index}
+                  label={<span style={formItemLabelStyle}>{field.label}</span>}
+                  name={field.name}
+                  rules={field.rules}
+                >
+                  <Upload
+                    name={field.name}
+                    beforeUpload={() => false} // Prevent immediate upload
+                    onChange={handleFileChange}
+                    disabled
+                  >
+                    <Button icon={<UploadOutlined />}>Upload File</Button>
+                  </Upload>
                 </Form.Item>
               )
             default:
