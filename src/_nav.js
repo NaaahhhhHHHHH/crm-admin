@@ -17,7 +17,8 @@ import {
   cilControl,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
-const apiUrl = import.meta.env.VITE_API_URL
+const apiUrl =
+  import.meta.env.MODE == 'product' ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_LOCAL
 
 const _nav = [
   {

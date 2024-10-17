@@ -1,7 +1,7 @@
 // src/api.js
 import axios from 'axios'
-
-const apiUrl = import.meta.env.VITE_API_URL
+const apiUrl =
+  import.meta.env.MODE == 'product' ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_LOCAL
 const BASE_URL = `${apiUrl}/api`
 
 const getAuthToken = () => {

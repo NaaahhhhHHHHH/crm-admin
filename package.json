@@ -9,7 +9,8 @@
     "build": "vite build",
     "lint": "eslint \"src/**/*.js\"",
     "serve": "vite preview",
-    "start": "vite"
+    "start": "vite --mode product",
+    "dev": "vite --mode development" 
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.1",
