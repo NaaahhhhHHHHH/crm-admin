@@ -25,7 +25,7 @@ axiosInstance.interceptors.request.use((config) => {
 // Function to handle login API request
 export const login = async (username, password) => {
   try {
-    const response = await axios.post(`${BASE_URL}/auth/login`, {
+    const response = await axios.post(`${BASE_URL}/auth/loginAdmin`, {
       username,
       password,
     })

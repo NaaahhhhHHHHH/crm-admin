@@ -15,6 +15,7 @@ import {
   Divider,
   Radio,
   Space,
+  Upload,
   Card,
 } from 'antd'
 import { useNavigate } from 'react-router-dom'
@@ -24,9 +25,15 @@ import {
   DeleteOutlined,
   EditOutlined,
   FolderViewOutlined,
+  UploadOutlined,
   FileAddOutlined,
+
 } from '@ant-design/icons'
 import { updateData, createData, deleteData, getData } from '../../../api'
+import axios from 'axios'
+const apiUrl =
+  import.meta.env.MODE == 'product' ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_LOCAL
+const BASE_URL = `${apiUrl}/api`
 import Highlighter from 'react-highlight-words'
 import dayjs from 'dayjs'
 const dateFormat = 'YYYY/MM/DD'
@@ -41,6 +48,7 @@ const ServiceTable = () => {
   const [customerData, setCustomerData] = useState([])
   const [serviceData, setServiceData] = useState([])
   const [isModalVisible, setIsModalVisible] = useState(false)
+  const [fileList, setFileList] = useState([])
   // const [serviceName, setServiceName] = useState('')
   // const [isViewModalVisible, setIsViewModalVisible] = useState(false)
   // const [currentService, setCurrentService] = useState(null)
@@ -324,6 +332,63 @@ const ServiceTable = () => {
     }
   }
 
+  const handleFileChange = async (index, { file, fileList: newFileList }) => {
+    try {
+      let fileI = newFileList.find(f => f.uid == file.uid)
+      if (fileI) {
+      const formFile = new FormData();
+      formFile.append('file', file); 
+      const response = await axios.post( BASE_URL + '/upload', formFile, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': 'Bearer ' + localStorage.getItem('CRM-token')
+        },
+      });
+      if (response.status === 200) {
+        message.success(`${file.name} uploaded successfully.`);
+        fileI.storagename = response.data.file.filename;
+        fileI.status = 'done'
+        fileI.url = BASE_URL + '/download/' + fileI.storagename;
+        setFileList((prev) => ({
+          ...prev,
+          [index]: newFileList, // Store file list under the form item index
+        }))
+      }
+      }
+    } catch (error) {
+      message.error(`${file.name} upload failed.`);
+    }
+  }
+
+  const handleDownloadFile = async (file) => {
+    try {
+    await axios.get(file.url, {
+      responseType: 'blob',
+      headers: {
+        Authorization: 'Bearer ' + localStorage.getItem('CRM-token')
+      },
+    }).then((response) => {
+    const extname = file.name.toLowerCase().split('.')[file.name.toLowerCase().split('.').length - 1];
+    let contentType = 'application/octet-stream'; // Default content type
+    if (extname === 'png') {
+      contentType = 'image/png';
+    } else if (extname === 'jpg' || extname === 'jpeg') {
+      contentType = 'image/jpeg';
+    }
+    // const blob = new Blob([response.data], {type: contentType})
+    const url = URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', file.name); // Specify the file name to download
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    })
+    } catch (error) {
+      message.error(`${file.name} download failed.`);
+    }
+  }
+
   const columns = [
     {
       title: 'Customer Name',
@@ -599,6 +664,27 @@ const ServiceTable = () => {
                           </Checkbox.Group>
                         </Form.Item>
                       )
+                      case 'file':
+                        return (
+                          <Form.Item
+                            key={index}
+                            label={<span style={formItemLabelStyle}>{field.label}</span>}
+                            name={['data', index, 'value']}
+                            rules={field.rules}
+                          >
+                            <Upload
+                              defaultFileList={form.getFieldValue().data[index].value ? form.getFieldValue().data[index].value.fileList : []}
+                              click
+                              name={field.name}
+                              beforeUpload={() => false}
+                              onChange={(info) => handleFileChange(index, info)}
+                              onPreview={(file) => handleDownloadFile(file)}
+                              // disabled
+                            >
+                              <Button icon={<UploadOutlined />}>Upload File</Button>
+                            </Upload>
+                          </Form.Item>
+                        )
                     default:
                       return null
                   }
