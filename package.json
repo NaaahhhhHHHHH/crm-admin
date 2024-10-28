@@ -6,7 +6,7 @@
   "license": "MIT",
   "author": "CRM App",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build --mode product",
     "lint": "eslint \"src/**/*.js\"",
     "serve": "vite preview",
     "start": "vite --mode product",
