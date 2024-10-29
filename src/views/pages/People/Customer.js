@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Table, Space, Input, Button, Modal, Form, message, Row, Col, Checkbox, Radio } from 'antd'
+import { Table, Space, Input, Button, Modal, Form, message, Row, Col, Checkbox, Radio, Popconfirm } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { updateData, createData, deleteData, getData } from '../../../api'
 import "../index.css";
@@ -296,15 +296,24 @@ const CustomerTable = () => {
           <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
             <EditOutlined style={{ fontSize: '20px' }} />
           </Button>
+          <Popconfirm
+            placement="bottom"
+            title={'Delete customer'}
+            description={'Are you sure to delete this customer?'}
+            okText="Yes"
+            cancelText="No"
+            onConfirm={() => handleDelete(record.id)}
+          >
           <Button
             size="large"
             color="danger"
             variant="text"
             style={{ marginLeft: 5 }}
-            onClick={() => handleDelete(record.id)}
+            //onClick={() => handleDelete(record.id)}
           >
             <DeleteOutlined style={{ fontSize: '20px' }} />
           </Button>
+          </Popconfirm>
         </>
       ),
     },

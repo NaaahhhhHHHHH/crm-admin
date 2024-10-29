@@ -4,6 +4,7 @@
 
 .custom-width-long {
     max-width: 500px;
+    white-space: pre-wrap;
   }
 
 .custom-width-short {
