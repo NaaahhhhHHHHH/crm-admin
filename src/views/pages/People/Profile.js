@@ -102,7 +102,7 @@ const EmployeeTable = () => {
             label="Username"
             rules={[{ required: true, message: 'Please input username!' }]}
           >
-            <Input />
+            <Input disabled={true}/>
           </Form.Item>
           <Form.Item
             name="email"

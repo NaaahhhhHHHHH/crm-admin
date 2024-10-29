@@ -20,12 +20,18 @@ import {
   cilSettings,
   cilTask,
   cilUser,
+  cilAlbum,
+  cilImage,
 } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
 import { updateData, createData, deleteData, getData } from '../../api'
-import { Avatar, Button, message } from 'antd'
+import { Avatar, Button, message, Upload } from 'antd'
 import { useSelector, useDispatch } from 'react-redux'
 import { auth } from '../../authApi'
+import axios from 'axios'
+const apiUrl =
+  import.meta.env.MODE == 'product' ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_LOCAL
+const BASE_URL = `${apiUrl}/api`
 
 const AppHeaderDropdown = () => {
   const dispatch = useDispatch()
@@ -119,6 +125,28 @@ const AppHeaderDropdown = () => {
     }
   }
 
+  const handleFileChange = async ({ file, fileList: newFileList }) => {
+    try {
+      let fileI = newFileList.find(f => f.uid == file.uid)
+      if (fileI) {
+      const formFile = new FormData();
+      formFile.append('file', file); 
+      const response = await axios.post( BASE_URL + '/uploadLogo', formFile, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': 'Bearer ' + localStorage.getItem('CRM-token')
+        },
+      });
+      if (response.status === 200) {
+        message.success(`${file.name} uploaded successfully.`);
+        location.reload();
+      }
+      }
+    } catch (error) {
+      message.error(`${file.name} upload failed.`);
+    }
+  }
+
   // const Avatar = () => {
   //   if (avatar == 'None') {
   //     return (
@@ -163,6 +191,22 @@ const AppHeaderDropdown = () => {
         {/* {Avatar()} */}
       </CDropdownToggle>
       <CDropdownMenu className="pt-0" placement="bottom-end">
+        <CDropdownHeader className="bg-body-secondary fw-semibold mb-2">Logo</CDropdownHeader>
+        <CDropdownItem onClick={() => {
+          document.getElementsByClassName('uploadLogo')[0].click();
+        }}>
+          <CIcon icon={cilImage} className="me-2" />
+          Upload Logo
+          <Upload
+            beforeUpload={() => false}
+            onChange={(info) => handleFileChange(info)}
+            showUploadList={false}
+            // onPreview={(file) => handleDownloadFile(file)}
+            // disabled
+          >
+            <Button className='uploadLogo' hidden>Upload File</Button>
+          </Upload>
+        </CDropdownItem>
         <CDropdownHeader className="bg-body-secondary fw-semibold mb-2">Account</CDropdownHeader>
         <CDropdownItem href="#/Job/Job">
           <CIcon icon={cilBell} className="me-2" />

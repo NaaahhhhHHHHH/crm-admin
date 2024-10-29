@@ -3,6 +3,7 @@ import { Table, Space, Input, Button, Modal, Form, message, Row, Col, Checkbox, 
 import { useNavigate } from 'react-router-dom'
 import { updateData, createData, deleteData, getData } from '../../../api'
 import { useSelector, useDispatch } from 'react-redux'
+import "../index.css";
 import {
   SearchOutlined,
   CheckOutlined,
@@ -206,28 +207,31 @@ const EmployeeTable = () => {
     {
       title: 'Name',
       dataIndex: 'name',
+      className:"custom-width",
       key: 'name',
       ...getColumnSearchProps('name'),
-      width: 250,
+      textWrap: 'word-break',
       sorter: (a, b) => a.name.localeCompare(b.name),
       defaultSortOrder: 'ascend',
-      ellipsis: true,
+      fixed: 'left',
     },
     {
       title: 'Username',
       dataIndex: 'username',
-      key: 'username',
-      width: 250,
       ...getColumnSearchProps('username'),
-      ellipsis: true,
+      className:"custom-width",
+      // ellipsis: true,
+      textWrap: 'word-break',
+      key: 'username',
     },
     {
       title: 'Email',
       dataIndex: 'email',
-      key: 'email',
-      width: 250,
       ...getColumnSearchProps('email'),
-      ellipsis: true,
+      //ellipsis: true,
+      textWrap: 'word-break',
+      className:"custom-width",
+      key: 'email',
     },
     {
       title: 'Mobile',
@@ -241,6 +245,8 @@ const EmployeeTable = () => {
       title: 'Action',
       key: 'action',
       align: 'center',
+      fixed: 'right',
+      width: 150,
       render: (text, record) => (
         <>
            { role == 'owner' && (
@@ -302,6 +308,10 @@ const EmployeeTable = () => {
         dataSource={data}
         pagination={{ pageSize: 5 }}
         locale={{ emptyText: 'No employees found' }}
+        tableLayout="auto"
+        scroll={{ 
+          x: '100%',
+        }}
       />
       <Modal
         title={modalTitle}

@@ -20,6 +20,7 @@ import {
   Tag,
   Upload
 } from 'antd'
+import "../index.css";
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 const dateFormat = 'YYYY/MM/DD'
@@ -40,6 +41,7 @@ import DynamicFormModal from './ModalForm'
 import AssignFormModal from './ModalAssign'
 import { useSelector, useDispatch } from 'react-redux'
 import axios from 'axios'
+import { left, right } from '@popperjs/core';
 const apiUrl =
   import.meta.env.MODE == 'product' ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_LOCAL
 const BASE_URL = `${apiUrl}/api`
@@ -236,23 +238,23 @@ const ServiceTable = () => {
   const loadTicket = async () => {
     try {
       
-      const [response0, response1, response2, response4] = await Promise.all([
+      const [response0, response1, response2, response3, response4] = await Promise.all([
         getData('job'),
         getData('service'),
         getData('form'),
-        //getData('customer'),
+        getData('customer'),
         getData('ticket')
       ]);
 
       let jobList = response0.data
       let formList = response2.data
       let serviceList = response1.data
-      //let customerList = response4.data
+      let customerList = response3.data
       let ticketList = response4.data
 
       ticketList.forEach((a) => {
         a.key = a.id
-        //a.cname = customerList.find((e) => a.cid == e.id).name
+        a.cname = customerList.find((e) => a.cid == e.id).name
         a.sname = serviceList.find((s) => a.sid == s.id).name
       })
 
@@ -331,7 +333,7 @@ const ServiceTable = () => {
       const response = await axios.post( BASE_URL + '/upload', formFile, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Authorization': 'Bearer ' + localStorage.getItem('CRM-ctoken')
+          'Authorization': 'Bearer ' + localStorage.getItem('CRM-token')
         },
       });
       if (response.status === 200) {
@@ -355,7 +357,7 @@ const ServiceTable = () => {
     await axios.get(file.url, {
       responseType: 'blob',
       headers: {
-        Authorization: 'Bearer ' + localStorage.getItem('CRM-ctoken')
+        Authorization: 'Bearer ' + localStorage.getItem('CRM-token')
       },
     }).then((response) => {
     const extname = file.name.toLowerCase().split('.')[file.name.toLowerCase().split('.').length - 1];
@@ -422,17 +424,29 @@ const ServiceTable = () => {
       ...getColumnSearchProps('jid'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.jid - b.jid,
+      // fixed: left,
       //ellipsis: true,
     },
     {
       title: 'Service Name',
       dataIndex: 'sname',
       key: 'sname',
-      width: 300,
+      width: 250,
       ...getColumnSearchProps('sname'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.sname.localeCompare(b.sname),
-      ellipsis: true,
+      className:"custom-width",
+      textWrap: 'word-break',
+    },
+    {
+      title: 'Customer Name',
+      dataIndex: 'cname',
+      key: 'cname',
+      ...getColumnSearchProps('cname'),
+      width: 250,
+      sorter: (a, b) => a.cname.localeCompare(b.cname),
+      className:"custom-width",
+      textWrap: 'word-break',
     },
     {
       title: 'Status',
@@ -480,7 +494,6 @@ const ServiceTable = () => {
       render: (date) => dayjs(date).format(timeFormat),
       sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
       defaultSortOrder: 'descend',
-      ellipsis: true,
     },
     // {
     //   title: 'Description',
@@ -494,6 +507,7 @@ const ServiceTable = () => {
       title: 'Action',
       key: 'action',
       align: 'center',
+      fixed: right,
       render: (text, record) => (
         <>
           <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
@@ -529,7 +543,11 @@ const ServiceTable = () => {
         columns={columns}
         dataSource={tableData}
         pagination={{ pageSize: 5 }}
-        locale={{ emptyText: 'No Ticket found' }}
+        locale={{ emptyText: 'No tickets found' }}
+        tableLayout="auto"
+        scroll={{ 
+          x: '100%',
+        }}
       />
       <Modal
         title={modalTitle}

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { Table, Space, Input, Button, Modal, Form, message, Row, Col, Checkbox, Radio } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { updateData, createData, deleteData, getData } from '../../../api'
+import "../index.css";
 import {
   SearchOutlined,
   CheckOutlined,
@@ -11,7 +12,24 @@ import {
   FileAddOutlined,
 } from '@ant-design/icons'
 import Highlighter from 'react-highlight-words'
-
+// import { createStyles } from 'antd-style';
+// const useStyle = createStyles(({ css, token }) => {
+//   const { antCls } = token;
+//   return {
+//     customTable: css`
+//       ${antCls}-table {
+//         ${antCls}-table-container {
+//           ${antCls}-table-body,
+//           ${antCls}-table-content {
+//             scrollbar-width: thin;
+//             scrollbar-color: #eaeaea transparent;
+//             scrollbar-gutter: stable;
+//           }
+//         }
+//       }
+//     `,
+//   };
+// });
 const CustomerTable = () => {
   const [data, setData] = useState([])
   const [isModalVisible, setIsModalVisible] = useState(false)
@@ -22,7 +40,7 @@ const CustomerTable = () => {
   const [searchText, setSearchText] = useState('')
   const [searchedColumn, setSearchedColumn] = useState('')
   const searchInput = useRef(null)
-
+  // const { styles } = useStyle();
   const handleSearch = (selectedKeys, confirm, dataIndex) => {
     confirm()
     setSearchText(selectedKeys[0])
@@ -200,32 +218,37 @@ const CustomerTable = () => {
     {
       title: 'Name',
       dataIndex: 'name',
+      className:"custom-width",
       key: 'name',
       ...getColumnSearchProps('name'),
-      width: 200,
-      ellipsis: true,
       sorter: (a, b) => a.name.localeCompare(b.name),
       defaultSortOrder: 'ascend',
+      textWrap: 'word-break',
+      fixed: 'left',
     },
     {
       title: 'Username',
       dataIndex: 'username',
       ...getColumnSearchProps('username'),
-      width: 200,
-      ellipsis: true,
+      className:"custom-width",
+      // ellipsis: true,
+      textWrap: 'word-break',
       key: 'username',
     },
     {
       title: 'Email',
       dataIndex: 'email',
       ...getColumnSearchProps('email'),
-      width: 250,
+      //ellipsis: true,
+      textWrap: 'word-break',
+      className:"custom-width",
       key: 'email',
     },
     {
       title: 'Mobile',
       dataIndex: 'mobile',
       ...getColumnSearchProps('mobile'),
+      ellipsis: true,
       width: 120,
       key: 'mobile',
     },
@@ -266,6 +289,8 @@ const CustomerTable = () => {
       title: 'Action',
       key: 'action',
       align: 'center',
+      fixed: 'right',
+      width: 150,
       render: (text, record) => (
         <>
           <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
@@ -314,6 +339,10 @@ const CustomerTable = () => {
         dataSource={data}
         pagination={{ pageSize: 5 }}
         locale={{ emptyText: 'No customers found' }}
+        tableLayout="auto"
+        scroll={{ 
+          x: '100%',
+        }}
       />
       <Modal
         title={modalTitle}
@@ -341,7 +370,7 @@ const CustomerTable = () => {
             label="Username"
             rules={[{ required: true, message: 'Please input username!' }]}
           >
-            <Input />
+            <Input disabled={currentCustomer ? true : false}/>
           </Form.Item>
           <Form.Item
             name="email"

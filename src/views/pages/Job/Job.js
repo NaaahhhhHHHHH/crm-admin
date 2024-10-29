@@ -31,12 +31,14 @@ import {
   UserAddOutlined,
   DownOutlined,
 } from '@ant-design/icons'
+import "../index.css";
 import { updateData, createData, deleteData, getData } from '../../../api'
 import Highlighter from 'react-highlight-words'
 import DynamicFormModal from './ModalForm'
 import AssignFormModal from './ModalAssign'
 import dayjs from 'dayjs'
 import { useSelector, useDispatch } from 'react-redux'
+import { left, right } from '@popperjs/core';
 const dateFormat = 'YYYY/MM/DD'
 const timeFormat = 'YYYY/MM/DD hh:mm:ss'
 
@@ -97,8 +99,8 @@ const ServiceTable = () => {
       color: 'green',
     },
     {
-      value: 'Maintance',
-      label: 'Maintance',
+      value: 'Maintain',
+      label: 'Maintain',
       color: 'green',
     },
   ]
@@ -479,7 +481,8 @@ const ServiceTable = () => {
       ...getColumnSearchProps('id'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.id - b.id,
-      ellipsis: true,
+      fixed: left,
+      //ellipsis: true,
     },
     {
       title: 'Service Name',
@@ -489,7 +492,8 @@ const ServiceTable = () => {
       ...getColumnSearchProps('sname'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.sname.localeCompare(b.sname),
-      ellipsis: true,
+      className:"custom-width",
+      textWrap: 'word-break',
     },
     {
       title: 'Customer Name',
@@ -498,7 +502,8 @@ const ServiceTable = () => {
       ...getColumnSearchProps('cname'),
       width: 200,
       sorter: (a, b) => a.cname.localeCompare(b.cname),
-      ellipsis: true,
+      className:"custom-width",
+      textWrap: 'word-break',
     },
     {
       title: 'Budget',
@@ -508,7 +513,8 @@ const ServiceTable = () => {
       // ...getColumnSearchProps('budget'),
       render: (budget) => budget.toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
       sorter: (a, b) => a.budget - b.budget,
-      ellipsis: true,
+      className:"custom-width",
+      textWrap: 'word-break',
     },
     {
       title: 'Status',
@@ -556,7 +562,7 @@ const ServiceTable = () => {
       render: (date) => dayjs(date).format(timeFormat),
       sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
       defaultSortOrder: 'descend',
-      ellipsis: true,
+      // ellipsis: true,
     },
     // {
     //   title: 'Description',
@@ -570,6 +576,7 @@ const ServiceTable = () => {
       title: 'Action',
       key: 'action',
       align: 'center',
+      fixed: right,
       render: (text, record) => (
         <>
           <Button
@@ -655,6 +662,10 @@ const ServiceTable = () => {
         dataSource={data}
         pagination={{ pageSize: 5 }}
         locale={{ emptyText: 'No jobs found' }}
+        scroll={{ 
+          x: '100%',
+        }}
+        tableLayout="auto"
       />
       <DynamicFormModal
         title={serviceName}
@@ -676,7 +687,7 @@ const ServiceTable = () => {
         title={<div style={{ textAlign: 'center', width: '100%' }}>Assign list</div>}
         open={isAssignListModalVisible}
         style={{ top: 120, maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}
-        width={400}
+        width={600}
         onCancel={handleCloseAssignListModal}
         footer={null}
       >

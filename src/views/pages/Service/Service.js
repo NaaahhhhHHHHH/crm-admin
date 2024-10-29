@@ -25,6 +25,7 @@ import {
   FolderViewOutlined,
   FileAddOutlined,
 } from '@ant-design/icons'
+import "../index.css";
 import { updateData, createData, deleteData, getData } from '../../../api'
 import Highlighter from 'react-highlight-words'
 import DynamicFormModal from './ModalForm'
@@ -338,9 +339,11 @@ const ServiceTable = () => {
       dataIndex: 'name',
       key: 'name',
       ...getColumnSearchProps('name'),
-      width: 200,
       sorter: (a, b) => a.name.localeCompare(b.name),
-      ellipsis: true,
+      className:"custom-width",
+      minWidth: 200,
+      textWrap: 'word-break',
+      fixed: 'left',
     },
     {
       title: 'Price',
@@ -349,7 +352,9 @@ const ServiceTable = () => {
       width: 200,
       render: (price) => price.toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
       sorter: (a, b) => a.price - b.price,
-      ellipsis: true,
+      className:"custom-width",
+      minWidth: 200,
+      textWrap: 'word-break',
     },
     {
       title: 'Description',
@@ -357,22 +362,25 @@ const ServiceTable = () => {
       width: 400,
       dataIndex: 'description',
       key: 'description',
-      ellipsis: true,
+      className:"custom-width-long",
+      minWidth: 300,
+      textWrap: 'word-break',
     },
     {
       title: 'Create Date',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 180,
       render: (date) => dayjs(date).format(timeFormat),
       sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
+      width: 180,
       defaultSortOrder: 'descend',
-      ellipsis: true,
     },
     {
       title: 'Action',
       key: 'action',
       align: 'center',
+      minWidth: 100,
+      fixed: 'right',
       render: (text, record) => (
         <>
           <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
@@ -430,6 +438,10 @@ const ServiceTable = () => {
         dataSource={data}
         pagination={{ pageSize: 5 }}
         locale={{ emptyText: 'No services found' }}
+        scroll={{ 
+          x: '100%',
+        }}
+        tableLayout="auto"
       />
       <DynamicFormModal
         title={serviceName}
@@ -475,7 +487,7 @@ const ServiceTable = () => {
               <Form.Item
                 placeholder="$"
                 name="price"
-                label="Price"
+                label="Price ($)"
                 rules={[{ required: true, message: 'Please input service price!' }]}
               >
                 <InputNumber min={0} step={0.01} style={{ width: '100%' }} />

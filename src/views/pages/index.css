@@ -1,0 +1,11 @@
+.custom-width {
+    max-width: 300px;
+  }
+
+.custom-width-long {
+    max-width: 500px;
+  }
+
+.custom-width-short {
+    max-width: 200px;
+  }

@@ -23,6 +23,7 @@ import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 const dateFormat = 'YYYY/MM/DD'
 const timeFormat = 'YYYY/MM/DD hh:mm:ss'
+import "../index.css";
 import {
   SearchOutlined,
   CloseOutlined,
@@ -37,6 +38,7 @@ import Highlighter from 'react-highlight-words'
 import DynamicFormModal from './ModalForm'
 import AssignFormModal from './ModalAssign'
 import { useSelector, useDispatch } from 'react-redux'
+import { left, right } from '@popperjs/core'
 
 const { Step } = Steps
 const { TextArea } = Input
@@ -448,16 +450,19 @@ const ServiceTable = () => {
       dataIndex: 'ename',
       key: 'ename',
       width: 200,
+      fixed: left,
       ...getColumnSearchProps('ename'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.ename.localeCompare(b.ename),
-      ellipsis: true,
+      className:"custom-width",
+      textWrap: 'word-break',
     },
     {
       title: 'Job ID',
       dataIndex: 'jid',
       key: 'jid',
       align: 'center',
+      fixed: left,
       width: 120,
       ...getColumnSearchProps('jid'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
@@ -472,7 +477,8 @@ const ServiceTable = () => {
       ...getColumnSearchProps('sname'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.sname.localeCompare(b.sname),
-      ellipsis: true,
+      className:"custom-width",
+      textWrap: 'word-break',
     },
     // Table.EXPAND_COLUMN,
     {
@@ -484,7 +490,8 @@ const ServiceTable = () => {
       // render: (payment) =>
       //   payment.budget.toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
       sorter: (a, b) => a.payment.budget - b.payment.budget,
-      ellipsis: true,
+      className:"custom-width",
+      textWrap: 'word-break',
       render: (payment) => (
         <Tooltip
           placement="bottomLeft"
@@ -573,7 +580,6 @@ const ServiceTable = () => {
       render: (date) => dayjs(date).format(timeFormat),
       sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
       defaultSortOrder: 'descend',
-      ellipsis: true,
     },
     // {
     //   title: 'Description',
@@ -587,6 +593,7 @@ const ServiceTable = () => {
       title: 'Action',
       key: 'action',
       align: 'center',
+      fixed: right,
       render: (text, record) => (
         <>
           <Button color="primary" size="large" variant="text" onClick={() => showViewModal(record)}>
@@ -676,7 +683,11 @@ const ServiceTable = () => {
         columns={columns}
         dataSource={tableData}
         pagination={{ pageSize: 5 }}
-        locale={{ emptyText: 'No assignment found' }}
+        locale={{ emptyText: 'No assignments found' }}
+        scroll={{ 
+          x: '100%',
+        }}
+        tableLayout="auto"
         // expandable={{
         //   expandedRowRender: (record) => (
         //     <>

@@ -395,29 +395,30 @@ const ServiceTable = () => {
       dataIndex: 'cname',
       key: 'cname',
       ...getColumnSearchProps('cname'),
-      width: 350,
+      width: 200,
       sorter: (a, b) => a.cname.localeCompare(b.cname),
-      ellipsis: true,
+      className:"custom-width",
+      textWrap: 'word-break',
     },
     {
       title: 'Service Name',
       dataIndex: 'sname',
       key: 'sname',
       ...getColumnSearchProps('sname'),
-      width: 350,
+      width: 200,
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.sname.localeCompare(b.sname),
-      ellipsis: true,
+      className:"custom-width",
+      textWrap: 'word-break',
     },
     {
       title: 'Create Date',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 250,
       render: (date) => dayjs(date).format(timeFormat),
       sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
+      width: 180,
       defaultSortOrder: 'descend',
-      ellipsis: true,
     },
     // {
     //   title: 'Description',
@@ -431,6 +432,8 @@ const ServiceTable = () => {
       title: 'Action',
       key: 'action',
       align: 'center',
+      fixed: 'right',
+      width: 150,
       render: (text, record) => (
         <>
           <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
@@ -500,6 +503,10 @@ const ServiceTable = () => {
         dataSource={data}
         pagination={{ pageSize: 5 }}
         locale={{ emptyText: 'No forms found' }}
+        scroll={{ 
+          x: '100%',
+        }}
+        tableLayout="auto"
       />
       {/* <DynamicFormModal
         title={serviceName}
