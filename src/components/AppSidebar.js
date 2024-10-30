@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-
 import {
   CCloseButton,
+  CImage,
   CSidebar,
   CSidebarBrand,
   CSidebarFooter,
@@ -15,6 +15,11 @@ import { AppSidebarNav } from './AppSidebarNav'
 
 import { logo } from 'src/assets/brand/logo'
 import { sygnet } from 'src/assets/brand/sygnet'
+import axios from 'axios'
+// import logoImange from 'src/assets/brand/logo.png'
+const apiUrl =
+  import.meta.env.MODE == 'product' ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_LOCAL
+const BASE_URL = `${apiUrl}/api`
 
 // sidebar nav config
 import navigation from '../_nav'
@@ -30,6 +35,30 @@ const AppSidebar = () => {
     navigation[1].items.splice(1, 1)
   }
 
+  // useEffect(() => {
+  //   handleDownloadLogo()
+  // }, [])
+
+  // const handleDownloadLogo = async (file) => {
+  //   try {
+  //   await axios.get(BASE_URL + '/downloadLogo', {
+  //     responseType: 'blob',
+  //   }).then((response) => {
+  //   let contentType = 'image/png';
+  //   // const blob = new Blob([response.data], {type: contentType})
+  //   const url = URL.createObjectURL(response.data);
+  //   const link = document.createElement('a');
+  //   link.href = url;
+  //   link.setAttribute('download', file.name); // Specify the file name to download
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   link.remove();
+  //   })
+  //   } catch (error) {
+  //     message.error(`${file.name} download failed.`);
+  //   }
+  // }
+
   return (
     <CSidebar
       className="border-end"
@@ -43,8 +72,9 @@ const AppSidebar = () => {
     >
       <CSidebarHeader>
         <CSidebarBrand to="/">
-          <CIcon customClassName="sidebar-brand-full" icon={logo} height={60} />
-          <CIcon customClassName="sidebar-brand" icon={sygnet} height={60} />
+          {/* <CIcon customClassName="sidebar-brand-full" icon={logo} height={60} />
+          <CIcon customClassName="sidebar-brand" icon={sygnet} height={60} /> */}
+          <CImage src={BASE_URL + '/downloadLogo'} alt="Logo" height={60}></CImage>
         </CSidebarBrand>
         <CCloseButton
           className="d-lg-none"

@@ -18,6 +18,7 @@ import {
   Card,
   Tree,
   Tag,
+  Popconfirm,
 } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -31,12 +32,14 @@ import {
   UserAddOutlined,
   DownOutlined,
 } from '@ant-design/icons'
+import '../index.css'
 import { updateData, createData, deleteData, getData } from '../../../api'
 import Highlighter from 'react-highlight-words'
 import DynamicFormModal from './ModalForm'
 import AssignFormModal from './ModalAssign'
 import dayjs from 'dayjs'
 import { useSelector, useDispatch } from 'react-redux'
+import { left, right } from '@popperjs/core'
 const dateFormat = 'YYYY/MM/DD'
 const timeFormat = 'YYYY/MM/DD hh:mm:ss'
 
@@ -97,8 +100,8 @@ const ServiceTable = () => {
       color: 'green',
     },
     {
-      value: 'Maintance',
-      label: 'Maintance',
+      value: 'Maintain',
+      label: 'Maintain',
       color: 'green',
     },
   ]
@@ -483,7 +486,8 @@ const ServiceTable = () => {
       ...getColumnSearchProps('id'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.id - b.id,
-      ellipsis: true,
+      fixed: left,
+      //ellipsis: true,
     },
     {
       title: 'Service Name',
@@ -493,7 +497,8 @@ const ServiceTable = () => {
       ...getColumnSearchProps('sname'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.sname.localeCompare(b.sname),
-      ellipsis: true,
+      className: 'custom-width',
+      textWrap: 'word-break',
     },
     {
       title: 'Customer Name',
@@ -502,7 +507,8 @@ const ServiceTable = () => {
       ...getColumnSearchProps('cname'),
       width: 200,
       sorter: (a, b) => a.cname.localeCompare(b.cname),
-      ellipsis: true,
+      className: 'custom-width',
+      textWrap: 'word-break',
     },
     {
       title: 'Budget',
@@ -512,7 +518,8 @@ const ServiceTable = () => {
       // ...getColumnSearchProps('budget'),
       render: (budget) => budget.toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
       sorter: (a, b) => a.budget - b.budget,
-      ellipsis: true,
+      className: 'custom-width',
+      textWrap: 'word-break',
     },
     {
       title: 'Status',
@@ -560,7 +567,7 @@ const ServiceTable = () => {
       render: (date) => dayjs(date).format(timeFormat),
       sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
       defaultSortOrder: 'descend',
-      ellipsis: true,
+      // ellipsis: true,
     },
     // {
     //   title: 'Description',
@@ -574,6 +581,7 @@ const ServiceTable = () => {
       title: 'Action',
       key: 'action',
       align: 'center',
+      fixed: right,
       render: (text, record) => (
         <>
           <Button
@@ -612,15 +620,24 @@ const ServiceTable = () => {
             </Button>
           )}
           {record.assigned && (
-            <Button
-              size="large"
-              color="danger"
-              variant="text"
-              onClick={() => handleDelete(record.id)}
-              style={{ marginLeft: 5 }}
+            <Popconfirm
+              placement="bottom"
+              title={'Delete job'}
+              description={'Are you sure to delete this job ?'}
+              okText="Yes"
+              cancelText="No"
+              onConfirm={() => handleDelete(record.id)}
             >
-              <DeleteOutlined style={{ fontSize: '20px' }} />
-            </Button>
+              <Button
+                size="large"
+                color="danger"
+                variant="text"
+                // onClick={() => handleDelete(record.id)}
+                style={{ marginLeft: 5 }}
+              >
+                <DeleteOutlined style={{ fontSize: '20px' }} />
+              </Button>
+            </Popconfirm>
           )}
         </>
       ),
@@ -659,6 +676,10 @@ const ServiceTable = () => {
         dataSource={data}
         pagination={{ pageSize: 5 }}
         locale={{ emptyText: 'No jobs found' }}
+        scroll={{
+          x: '100%',
+        }}
+        tableLayout="auto"
       />
       <DynamicFormModal
         title={serviceName}
@@ -679,8 +700,8 @@ const ServiceTable = () => {
       <Modal
         title={<div style={{ textAlign: 'center', width: '100%' }}>Assign list</div>}
         open={isAssignListModalVisible}
-        style={{ top: 120, maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}
-        width={400}
+        style={{ top: 120, overflowY: 'auto', overflowX: 'hidden' }}
+        width={600}
         onCancel={handleCloseAssignListModal}
         footer={null}
       >
@@ -698,7 +719,7 @@ const ServiceTable = () => {
       <Modal
         title={modalTitle}
         open={isModalVisible}
-        style={{ top: 120, maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}
+        style={{ top: 120, overflowY: 'auto', overflowX: 'hidden' }}
         width={700}
         onCancel={handleCloseModal}
         footer={null}

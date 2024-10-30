@@ -72,7 +72,7 @@ const DynamicFormModal = ({ title, visible, onClose, formDataArray, onSubmit }) 
       onCancel={onClose}
       footer={null}
       width={700}
-      style={{ top: 120, maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}
+      style={{ top: 120, overflowY: 'auto', overflowX: 'hidden' }}
     >
       <Form form={form} layout="vertical" onFinish={handleFinish}>
         {fields.map((field, index) => {

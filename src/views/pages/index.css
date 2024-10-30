@@ -1,0 +1,12 @@
+.custom-width {
+    max-width: 300px;
+  }
+
+.custom-width-long {
+    max-width: 500px;
+    white-space: pre-wrap;
+  }
+
+.custom-width-short {
+    max-width: 200px;
+  }

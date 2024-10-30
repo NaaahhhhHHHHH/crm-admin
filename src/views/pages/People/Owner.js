@@ -1,5 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Table, Space, Input, Button, Modal, Form, message, Row, Col, Checkbox, Radio } from 'antd'
+import {
+  Table,
+  Space,
+  Input,
+  Button,
+  Modal,
+  Form,
+  message,
+  Row,
+  Col,
+  Checkbox,
+  Radio,
+  Popconfirm,
+} from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { updateData, createData, deleteData, getData } from '../../../api'
 import {
@@ -132,7 +145,11 @@ const OwnerTable = () => {
   }, [])
 
   const handleError = (error) => {
-    message.error((error.response && error.response.data ? error.response.data.message: '') || error.message|| error.message)
+    message.error(
+      (error.response && error.response.data ? error.response.data.message : '') ||
+        error.message ||
+        error.message,
+    )
     if (error.status == 401) {
       navigate('/login')
     } else if (error.status == 500) {
@@ -200,28 +217,31 @@ const OwnerTable = () => {
     {
       title: 'Name',
       dataIndex: 'name',
+      className: 'custom-width',
       key: 'name',
       ...getColumnSearchProps('name'),
-      width: 250,
+      textWrap: 'word-break',
       sorter: (a, b) => a.name.localeCompare(b.name),
       defaultSortOrder: 'ascend',
-      ellipsis: true,
+      fixed: 'left',
     },
     {
       title: 'Username',
       dataIndex: 'username',
-      key: 'username',
-      width: 250,
       ...getColumnSearchProps('username'),
-      ellipsis: true,
+      className: 'custom-width',
+      // ellipsis: true,
+      textWrap: 'word-break',
+      key: 'username',
     },
     {
       title: 'Email',
       dataIndex: 'email',
-      key: 'email',
-      width: 250,
       ...getColumnSearchProps('email'),
-      ellipsis: true,
+      //ellipsis: true,
+      textWrap: 'word-break',
+      className: 'custom-width',
+      key: 'email',
     },
     {
       title: 'Mobile',
@@ -235,20 +255,31 @@ const OwnerTable = () => {
       title: 'Action',
       key: 'action',
       align: 'center',
+      fixed: 'right',
+      width: 150,
       render: (text, record) => (
         <>
           <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
             <EditOutlined style={{ fontSize: '20px' }} />
           </Button>
-          <Button
-            size="large"
-            color="danger"
-            style={{ marginLeft: 5 }}
-            variant="text"
-            onClick={() => handleDelete(record.id)}
+          <Popconfirm
+            placement="bottom"
+            title={'Delete owner'}
+            description={'Are you sure to delete this owner ?'}
+            okText="Yes"
+            cancelText="No"
+            onConfirm={() => handleDelete(record.id)}
           >
-            <DeleteOutlined style={{ fontSize: '20px' }} />
-          </Button>
+            <Button
+              size="large"
+              color="danger"
+              style={{ marginLeft: 5 }}
+              variant="text"
+              // onClick={() => handleDelete(record.id)}
+            >
+              <DeleteOutlined style={{ fontSize: '20px' }} />
+            </Button>
+          </Popconfirm>
         </>
       ),
     },
@@ -283,10 +314,14 @@ const OwnerTable = () => {
         dataSource={data}
         pagination={{ pageSize: 5 }}
         locale={{ emptyText: 'No owners found' }}
+        tableLayout="auto"
+        scroll={{
+          x: '100%',
+        }}
       />
       <Modal
         title={modalTitle}
-        visible={isModalVisible}
+        open={isModalVisible}
         style={{ top: 120 }}
         onCancel={() => handleCloseModal()}
         onClose={() => handleCloseModal()}
@@ -310,7 +345,7 @@ const OwnerTable = () => {
             label="Username"
             rules={[{ required: true, message: 'Please input username!' }]}
           >
-            <Input />
+            <Input disabled={currentOwner ? true : false} />
           </Form.Item>
           <Form.Item
             name="email"

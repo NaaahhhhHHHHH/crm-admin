@@ -17,6 +17,7 @@ import {
   Space,
   Upload,
   Card,
+  Popconfirm,
 } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -27,7 +28,6 @@ import {
   FolderViewOutlined,
   UploadOutlined,
   FileAddOutlined,
-
 } from '@ant-design/icons'
 import { updateData, createData, deleteData, getData } from '../../../api'
 import axios from 'axios'
@@ -185,7 +185,11 @@ const ServiceTable = () => {
   }, [])
 
   const handleError = (error) => {
-    message.error((error.response && error.response.data ? error.response.data.message: '') || error.message|| error.message)
+    message.error(
+      (error.response && error.response.data ? error.response.data.message : '') ||
+        error.message ||
+        error.message,
+    )
     if (error.status == 401) {
       navigate('/login')
     } else if (error.status === 500) {
@@ -198,8 +202,8 @@ const ServiceTable = () => {
       const [response1, response2, response3] = await Promise.all([
         getData('service'),
         getData('form'),
-        getData('customer')
-      ]);
+        getData('customer'),
+      ])
       let formList = response2.data
       let serviceList = response1.data
       let customerList = response3.data
@@ -334,58 +338,62 @@ const ServiceTable = () => {
 
   const handleFileChange = async (index, { file, fileList: newFileList }) => {
     try {
-      let fileI = newFileList.find(f => f.uid == file.uid)
+      let fileI = newFileList.find((f) => f.uid == file.uid)
       if (fileI) {
-      const formFile = new FormData();
-      formFile.append('file', file); 
-      const response = await axios.post( BASE_URL + '/upload', formFile, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': 'Bearer ' + localStorage.getItem('CRM-token')
-        },
-      });
-      if (response.status === 200) {
-        message.success(`${file.name} uploaded successfully.`);
-        fileI.storagename = response.data.file.filename;
-        fileI.status = 'done'
-        fileI.url = BASE_URL + '/download/' + fileI.storagename;
-        setFileList((prev) => ({
-          ...prev,
-          [index]: newFileList, // Store file list under the form item index
-        }))
-      }
+        const formFile = new FormData()
+        formFile.append('file', file)
+        const response = await axios.post(BASE_URL + '/upload', formFile, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: 'Bearer ' + localStorage.getItem('CRM-token'),
+          },
+        })
+        if (response.status === 200) {
+          message.success(`${file.name} uploaded successfully.`)
+          fileI.storagename = response.data.file.filename
+          fileI.status = 'done'
+          fileI.url = BASE_URL + '/download/' + fileI.storagename
+          setFileList((prev) => ({
+            ...prev,
+            [index]: newFileList, // Store file list under the form item index
+          }))
+        }
       }
     } catch (error) {
-      message.error(`${file.name} upload failed.`);
+      message.error(`${file.name} upload failed.`)
     }
   }
 
   const handleDownloadFile = async (file) => {
     try {
-    await axios.get(file.url, {
-      responseType: 'blob',
-      headers: {
-        Authorization: 'Bearer ' + localStorage.getItem('CRM-token')
-      },
-    }).then((response) => {
-    const extname = file.name.toLowerCase().split('.')[file.name.toLowerCase().split('.').length - 1];
-    let contentType = 'application/octet-stream'; // Default content type
-    if (extname === 'png') {
-      contentType = 'image/png';
-    } else if (extname === 'jpg' || extname === 'jpeg') {
-      contentType = 'image/jpeg';
-    }
-    // const blob = new Blob([response.data], {type: contentType})
-    const url = URL.createObjectURL(response.data);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', file.name); // Specify the file name to download
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    })
+      await axios
+        .get(file.url, {
+          responseType: 'blob',
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('CRM-token'),
+          },
+        })
+        .then((response) => {
+          const extname = file.name.toLowerCase().split('.')[
+            file.name.toLowerCase().split('.').length - 1
+          ]
+          let contentType = 'application/octet-stream' // Default content type
+          if (extname === 'png') {
+            contentType = 'image/png'
+          } else if (extname === 'jpg' || extname === 'jpeg') {
+            contentType = 'image/jpeg'
+          }
+          // const blob = new Blob([response.data], {type: contentType})
+          const url = URL.createObjectURL(response.data)
+          const link = document.createElement('a')
+          link.href = url
+          link.setAttribute('download', file.name) // Specify the file name to download
+          document.body.appendChild(link)
+          link.click()
+          link.remove()
+        })
     } catch (error) {
-      message.error(`${file.name} download failed.`);
+      message.error(`${file.name} download failed.`)
     }
   }
 
@@ -395,29 +403,30 @@ const ServiceTable = () => {
       dataIndex: 'cname',
       key: 'cname',
       ...getColumnSearchProps('cname'),
-      width: 350,
+      width: 200,
       sorter: (a, b) => a.cname.localeCompare(b.cname),
-      ellipsis: true,
+      className: 'custom-width',
+      textWrap: 'word-break',
     },
     {
       title: 'Service Name',
       dataIndex: 'sname',
       key: 'sname',
       ...getColumnSearchProps('sname'),
-      width: 350,
+      width: 200,
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.sname.localeCompare(b.sname),
-      ellipsis: true,
+      className: 'custom-width',
+      textWrap: 'word-break',
     },
     {
       title: 'Create Date',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 250,
       render: (date) => dayjs(date).format(timeFormat),
       sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
+      width: 180,
       defaultSortOrder: 'descend',
-      ellipsis: true,
     },
     // {
     //   title: 'Description',
@@ -431,6 +440,8 @@ const ServiceTable = () => {
       title: 'Action',
       key: 'action',
       align: 'center',
+      fixed: 'right',
+      width: 150,
       render: (text, record) => (
         <>
           <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
@@ -446,15 +457,24 @@ const ServiceTable = () => {
           >
             <FolderViewOutlined style={{ fontSize: '20px' }} />
           </Button> */}
-          <Button
-            size="large"
-            color="danger"
-            variant="text"
-            onClick={() => handleDelete(record.id)}
-            style={{ marginLeft: 5 }}
+          <Popconfirm
+            placement="bottom"
+            title={'Delete form'}
+            description={'Are you sure to delete this form ?'}
+            okText="Yes"
+            cancelText="No"
+            onConfirm={() => handleDelete(record.id)}
           >
-            <DeleteOutlined style={{ fontSize: '20px' }} />
-          </Button>
+            <Button
+              size="large"
+              color="danger"
+              variant="text"
+              // onClick={() => handleDelete(record.id)}
+              style={{ marginLeft: 5 }}
+            >
+              <DeleteOutlined style={{ fontSize: '20px' }} />
+            </Button>
+          </Popconfirm>
         </>
       ),
     },
@@ -500,6 +520,10 @@ const ServiceTable = () => {
         dataSource={data}
         pagination={{ pageSize: 5 }}
         locale={{ emptyText: 'No forms found' }}
+        scroll={{
+          x: '100%',
+        }}
+        tableLayout="auto"
       />
       {/* <DynamicFormModal
         title={serviceName}
@@ -511,7 +535,7 @@ const ServiceTable = () => {
       <Modal
         title={modalTitle}
         open={isModalVisible}
-        style={{ top: 120, maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}
+        style={{ top: 120, overflowY: 'auto', overflowX: 'hidden' }}
         width={700}
         onCancel={handleCloseModal}
         footer={null}
@@ -664,27 +688,31 @@ const ServiceTable = () => {
                           </Checkbox.Group>
                         </Form.Item>
                       )
-                      case 'file':
-                        return (
-                          <Form.Item
-                            key={index}
-                            label={<span style={formItemLabelStyle}>{field.label}</span>}
-                            name={['data', index, 'value']}
-                            rules={field.rules}
+                    case 'file':
+                      return (
+                        <Form.Item
+                          key={index}
+                          label={<span style={formItemLabelStyle}>{field.label}</span>}
+                          name={['data', index, 'value']}
+                          rules={field.rules}
+                        >
+                          <Upload
+                            defaultFileList={
+                              form.getFieldValue().data[index].value
+                                ? form.getFieldValue().data[index].value.fileList
+                                : []
+                            }
+                            click
+                            name={field.name}
+                            beforeUpload={() => false}
+                            onChange={(info) => handleFileChange(index, info)}
+                            onPreview={(file) => handleDownloadFile(file)}
+                            // disabled
                           >
-                            <Upload
-                              defaultFileList={form.getFieldValue().data[index].value ? form.getFieldValue().data[index].value.fileList : []}
-                              click
-                              name={field.name}
-                              beforeUpload={() => false}
-                              onChange={(info) => handleFileChange(index, info)}
-                              onPreview={(file) => handleDownloadFile(file)}
-                              // disabled
-                            >
-                              <Button icon={<UploadOutlined />}>Upload File</Button>
-                            </Upload>
-                          </Form.Item>
-                        )
+                            <Button icon={<UploadOutlined />}>Upload File</Button>
+                          </Upload>
+                        </Form.Item>
+                      )
                     default:
                       return null
                   }

@@ -55,8 +55,8 @@ const AssignFormModal = ({
       // }))
       setFields(formDataArray)
       if (formDataArray.payment.period) {
-        formDataArray.payment.period.forEach(r => {
-            r.date = dayjs(r.date, dateFormat)
+        formDataArray.payment.period.forEach((r) => {
+          r.date = dayjs(r.date, dateFormat)
         })
       }
       form.setFieldsValue(formDataArray)
@@ -165,7 +165,7 @@ const AssignFormModal = ({
       onCancel={handleCancel}
       footer={null}
       width={700}
-      style={{ top: 120, maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}
+      style={{ top: 120, overflowY: 'auto', overflowX: 'hidden' }}
     >
       <Form
         form={form}
@@ -273,7 +273,7 @@ const AssignFormModal = ({
                     }),
                   ]}
                 >
-                  <InputNumber step={0.01} style={{ width: '100%'}} />
+                  <InputNumber step={0.01} style={{ width: '100%' }} />
                 </Form.Item>
               </>
             )}

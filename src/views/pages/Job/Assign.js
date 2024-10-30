@@ -18,11 +18,13 @@ import {
   Card,
   Tooltip,
   Tag,
+  Popconfirm,
 } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 const dateFormat = 'YYYY/MM/DD'
 const timeFormat = 'YYYY/MM/DD hh:mm:ss'
+import '../index.css'
 import {
   SearchOutlined,
   CloseOutlined,
@@ -37,6 +39,7 @@ import Highlighter from 'react-highlight-words'
 import DynamicFormModal from './ModalForm'
 import AssignFormModal from './ModalAssign'
 import { useSelector, useDispatch } from 'react-redux'
+import { left, right } from '@popperjs/core'
 
 const { Step } = Steps
 const { TextArea } = Input
@@ -289,7 +292,11 @@ const ServiceTable = () => {
   }, [user])
 
   const handleError = (error) => {
-    message.error((error.response && error.response.data ? error.response.data.message: '') || error.message|| error.message)
+    message.error(
+      (error.response && error.response.data ? error.response.data.message : '') ||
+        error.message ||
+        error.message,
+    )
     if (error.status == 401) {
       navigate('/login')
     } else if (error.status === 500) {
@@ -299,14 +306,13 @@ const ServiceTable = () => {
 
   const loadAssign = async () => {
     try {
-      
       const [response0, response1, response2, response4, response5] = await Promise.all([
         getData('job'),
         getData('service'),
         getData('form'),
         getData('employee'),
-        getData('assignment')
-      ]);
+        getData('assignment'),
+      ])
 
       let jobList = response0.data
       let formList = response2.data
@@ -448,16 +454,19 @@ const ServiceTable = () => {
       dataIndex: 'ename',
       key: 'ename',
       width: 200,
+      fixed: left,
       ...getColumnSearchProps('ename'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.ename.localeCompare(b.ename),
-      ellipsis: true,
+      className: 'custom-width',
+      textWrap: 'word-break',
     },
     {
       title: 'Job ID',
       dataIndex: 'jid',
       key: 'jid',
       align: 'center',
+      fixed: left,
       width: 120,
       ...getColumnSearchProps('jid'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
@@ -472,7 +481,8 @@ const ServiceTable = () => {
       ...getColumnSearchProps('sname'),
       //render: (price) => price.toLocaleString("en-US", {style:"currency", currency:"USD"}),
       sorter: (a, b) => a.sname.localeCompare(b.sname),
-      ellipsis: true,
+      className: 'custom-width',
+      textWrap: 'word-break',
     },
     // Table.EXPAND_COLUMN,
     {
@@ -484,7 +494,8 @@ const ServiceTable = () => {
       // render: (payment) =>
       //   payment.budget.toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
       sorter: (a, b) => a.payment.budget - b.payment.budget,
-      ellipsis: true,
+      className: 'custom-width',
+      textWrap: 'word-break',
       render: (payment) => (
         <Tooltip
           placement="bottomLeft"
@@ -497,6 +508,7 @@ const ServiceTable = () => {
               >{`${payment.period ? 'Total:' : ''} ${payment.budget}$`}</p>
               {payment.period &&
                 payment.period.map((value, idx) => (
+                  // eslint-disable-next-line react/jsx-key
                   <p
                     style={{
                       margin: 0,
@@ -515,6 +527,7 @@ const ServiceTable = () => {
           >{`${payment.period ? 'Total:' : ''} ${payment.budget}$`}</p>
           {payment.period &&
             payment.period.map((value, idx) => (
+              // eslint-disable-next-line react/jsx-key
               <p
                 style={{
                   margin: 0,
@@ -573,7 +586,6 @@ const ServiceTable = () => {
       render: (date) => dayjs(date).format(timeFormat),
       sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
       defaultSortOrder: 'descend',
-      ellipsis: true,
     },
     // {
     //   title: 'Description',
@@ -587,6 +599,7 @@ const ServiceTable = () => {
       title: 'Action',
       key: 'action',
       align: 'center',
+      fixed: right,
       render: (text, record) => (
         <>
           <Button color="primary" size="large" variant="text" onClick={() => showViewModal(record)}>
@@ -602,14 +615,23 @@ const ServiceTable = () => {
               >
                 <EditOutlined style={{ fontSize: '20px' }} />
               </Button>
-              <Button
-                size="large"
-                color="danger"
-                variant="text"
-                onClick={() => handleDelete(record.id)}
+              <Popconfirm
+                placement="bottom"
+                title={'Delete assignment'}
+                description={'Are you sure to delete this assignment ?'}
+                okText="Yes"
+                cancelText="No"
+                onConfirm={() => handleDelete(record.id)}
               >
-                <DeleteOutlined style={{ fontSize: '20px' }} />
-              </Button>
+                <Button
+                  size="large"
+                  color="danger"
+                  variant="text"
+                  // onClick={() => handleDelete(record.id)}
+                >
+                  <DeleteOutlined style={{ fontSize: '20px' }} />
+                </Button>
+              </Popconfirm>
             </>
           )}
           {role == 'employee' && record.eid == userId && (
@@ -676,7 +698,11 @@ const ServiceTable = () => {
         columns={columns}
         dataSource={tableData}
         pagination={{ pageSize: 5 }}
-        locale={{ emptyText: 'No assignment found' }}
+        locale={{ emptyText: 'No assignments found' }}
+        scroll={{
+          x: '100%',
+        }}
+        tableLayout="auto"
         // expandable={{
         //   expandedRowRender: (record) => (
         //     <>
@@ -718,7 +744,7 @@ const ServiceTable = () => {
       <Modal
         title={modalTitle}
         open={isModalVisible}
-        style={{ top: 120, maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}
+        style={{ top: 120, overflowY: 'auto', overflowX: 'hidden' }}
         width={700}
         onCancel={handleCloseModal}
         footer={null}

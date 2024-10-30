@@ -1,8 +1,22 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Table, Space, Input, Button, Modal, Form, message, Row, Col, Checkbox, Radio } from 'antd'
+import {
+  Table,
+  Space,
+  Input,
+  Button,
+  Modal,
+  Form,
+  message,
+  Row,
+  Col,
+  Checkbox,
+  Radio,
+  Popconfirm,
+} from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { updateData, createData, deleteData, getData } from '../../../api'
 import { useSelector, useDispatch } from 'react-redux'
+import '../index.css'
 import {
   SearchOutlined,
   CheckOutlined,
@@ -138,7 +152,11 @@ const EmployeeTable = () => {
   }, [])
 
   const handleError = (error) => {
-    message.error((error.response && error.response.data ? error.response.data.message: '') || error.message|| error.message)
+    message.error(
+      (error.response && error.response.data ? error.response.data.message : '') ||
+        error.message ||
+        error.message,
+    )
     if (error.status == 401) {
       navigate('/login')
     } else if (error.status == 500) {
@@ -206,28 +224,31 @@ const EmployeeTable = () => {
     {
       title: 'Name',
       dataIndex: 'name',
+      className: 'custom-width',
       key: 'name',
       ...getColumnSearchProps('name'),
-      width: 250,
+      textWrap: 'word-break',
       sorter: (a, b) => a.name.localeCompare(b.name),
       defaultSortOrder: 'ascend',
-      ellipsis: true,
+      fixed: 'left',
     },
     {
       title: 'Username',
       dataIndex: 'username',
-      key: 'username',
-      width: 250,
       ...getColumnSearchProps('username'),
-      ellipsis: true,
+      className: 'custom-width',
+      // ellipsis: true,
+      textWrap: 'word-break',
+      key: 'username',
     },
     {
       title: 'Email',
       dataIndex: 'email',
-      key: 'email',
-      width: 250,
       ...getColumnSearchProps('email'),
-      ellipsis: true,
+      //ellipsis: true,
+      textWrap: 'word-break',
+      className: 'custom-width',
+      key: 'email',
     },
     {
       title: 'Mobile',
@@ -241,31 +262,42 @@ const EmployeeTable = () => {
       title: 'Action',
       key: 'action',
       align: 'center',
+      fixed: 'right',
+      width: 150,
       render: (text, record) => (
         <>
-           { role == 'owner' && (
+          {role == 'owner' && (
             <>
-          <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
-            <EditOutlined style={{ fontSize: '20px' }} />
-          </Button>
-          <Button
-            size="large"
-            color="danger"
-            style={{ marginLeft: 5 }}
-            variant="text"
-            onClick={() => handleDelete(record.id)}
-          >
-            <DeleteOutlined style={{ fontSize: '20px' }} />
-          </Button>
-          </>
-           )}
-            { role == 'employee' && (
+              <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
+                <EditOutlined style={{ fontSize: '20px' }} />
+              </Button>
+              <Popconfirm
+                placement="bottom"
+                title={'Delete employee'}
+                description={'Are you sure to delete this employee?'}
+                okText="Yes"
+                cancelText="No"
+                onConfirm={() => handleDelete(record.id)}
+              >
+                <Button
+                  size="large"
+                  color="danger"
+                  style={{ marginLeft: 5 }}
+                  variant="text"
+                  // onClick={() => handleDelete(record.id)}
+                >
+                  <DeleteOutlined style={{ fontSize: '20px' }} />
+                </Button>
+              </Popconfirm>
+            </>
+          )}
+          {role == 'employee' && (
             <>
-          <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
-            <EyeOutlined style={{ fontSize: '20px' }} />
-          </Button>
-          </>
-           )}
+              <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
+                <EyeOutlined style={{ fontSize: '20px' }} />
+              </Button>
+            </>
+          )}
         </>
       ),
     },
@@ -280,9 +312,9 @@ const EmployeeTable = () => {
 
   return (
     <>
-      { role == 'owner' && (
-      <Row style={{ display: 'block', marginBottom: 5, textAlign: 'right' }}>
-        {/* <Col span={12}>
+      {role == 'owner' && (
+        <Row style={{ display: 'block', marginBottom: 5, textAlign: 'right' }}>
+          {/* <Col span={12}>
           <Input.Search
             placeholder="Search by name"
             onSearch={handleSearch}
@@ -290,18 +322,22 @@ const EmployeeTable = () => {
             style={{ width: '100%' }}
           />
         </Col> */}
-        <Col>
-          <Button color="primary" variant="text" size="large" onClick={() => showModal(null)}>
-            <FileAddOutlined style={{ fontSize: '20px' }}></FileAddOutlined>
-          </Button>
-        </Col>
-      </Row>
+          <Col>
+            <Button color="primary" variant="text" size="large" onClick={() => showModal(null)}>
+              <FileAddOutlined style={{ fontSize: '20px' }}></FileAddOutlined>
+            </Button>
+          </Col>
+        </Row>
       )}
       <Table
         columns={columns}
         dataSource={data}
         pagination={{ pageSize: 5 }}
         locale={{ emptyText: 'No employees found' }}
+        tableLayout="auto"
+        scroll={{
+          x: '100%',
+        }}
       />
       <Modal
         title={modalTitle}
@@ -322,14 +358,14 @@ const EmployeeTable = () => {
             label="Name"
             rules={[{ required: true, message: 'Please input name!' }]}
           >
-            <Input readOnly={role == 'employee'}/>
+            <Input readOnly={role == 'employee'} />
           </Form.Item>
           <Form.Item
             name="username"
             label="Username"
             rules={[{ required: true, message: 'Please input username!' }]}
           >
-            <Input />
+            <Input disabled={currentEmployee ? true : false} />
           </Form.Item>
           <Form.Item
             name="email"
@@ -339,7 +375,7 @@ const EmployeeTable = () => {
               { type: 'email', message: 'Please input valid email!' },
             ]}
           >
-            <Input readOnly={role == 'employee'}/>
+            <Input readOnly={role == 'employee'} />
           </Form.Item>
           <Form.Item
             name="mobile"
@@ -352,7 +388,7 @@ const EmployeeTable = () => {
               },
             ]}
           >
-            <Input readOnly={role == 'employee'}/>
+            <Input readOnly={role == 'employee'} />
           </Form.Item>
           <Form.Item
             name="work"
@@ -364,23 +400,23 @@ const EmployeeTable = () => {
               },
             ]}
           >
-            <Input readOnly={role == 'employee'}/>
+            <Input readOnly={role == 'employee'} />
           </Form.Item>
-          { role == 'owner' && (
-          <>
-          <Form.Item
-            name="password"
-            label={currentEmployee ? 'New Password' : 'Password'}
-            rules={[{ required: currentEmployee ? false : true }]}
-          >
-            <Input.Password />
-          </Form.Item>
-          <div style={{ textAlign: 'center' }}>
-            <Button type="primary" htmlType="submit">
-              {currentEmployee ? 'Update' : 'Add'}
-            </Button>
-          </div>
-          </>
+          {role == 'owner' && (
+            <>
+              <Form.Item
+                name="password"
+                label={currentEmployee ? 'New Password' : 'Password'}
+                rules={[{ required: currentEmployee ? false : true }]}
+              >
+                <Input.Password />
+              </Form.Item>
+              <div style={{ textAlign: 'center' }}>
+                <Button type="primary" htmlType="submit">
+                  {currentEmployee ? 'Update' : 'Add'}
+                </Button>
+              </div>
+            </>
           )}
         </Form>
       </Modal>

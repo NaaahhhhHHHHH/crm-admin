@@ -15,6 +15,7 @@ import {
   Divider,
   Space,
   Card,
+  Popconfirm,
 } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -25,6 +26,7 @@ import {
   FolderViewOutlined,
   FileAddOutlined,
 } from '@ant-design/icons'
+import '../index.css'
 import { updateData, createData, deleteData, getData } from '../../../api'
 import Highlighter from 'react-highlight-words'
 import DynamicFormModal from './ModalForm'
@@ -176,7 +178,11 @@ const ServiceTable = () => {
   }, [])
 
   const handleError = (error) => {
-    message.error((error.response && error.response.data ? error.response.data.message: '') || error.message|| error.message)
+    message.error(
+      (error.response && error.response.data ? error.response.data.message : '') ||
+        error.message ||
+        error.message,
+    )
     if (error.status == 401) {
       navigate('/login')
     } else if (error.status === 500) {
@@ -338,9 +344,11 @@ const ServiceTable = () => {
       dataIndex: 'name',
       key: 'name',
       ...getColumnSearchProps('name'),
-      width: 200,
       sorter: (a, b) => a.name.localeCompare(b.name),
-      ellipsis: true,
+      className: 'custom-width',
+      minWidth: 200,
+      textWrap: 'word-break',
+      fixed: 'left',
     },
     {
       title: 'Price',
@@ -349,7 +357,9 @@ const ServiceTable = () => {
       width: 200,
       render: (price) => price.toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
       sorter: (a, b) => a.price - b.price,
-      ellipsis: true,
+      className: 'custom-width',
+      minWidth: 200,
+      textWrap: 'word-break',
     },
     {
       title: 'Description',
@@ -357,22 +367,25 @@ const ServiceTable = () => {
       width: 400,
       dataIndex: 'description',
       key: 'description',
-      ellipsis: true,
+      className: 'custom-width-long',
+      minWidth: 300,
+      textWrap: 'word-break',
     },
     {
       title: 'Create Date',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 180,
       render: (date) => dayjs(date).format(timeFormat),
       sorter: (a, b) => a.createdAt.localeCompare(b.createdAt),
+      width: 180,
       defaultSortOrder: 'descend',
-      ellipsis: true,
     },
     {
       title: 'Action',
       key: 'action',
       align: 'center',
+      minWidth: 100,
+      fixed: 'right',
       render: (text, record) => (
         <>
           <Button color="primary" size="large" variant="text" onClick={() => showModal(record)}>
@@ -388,15 +401,24 @@ const ServiceTable = () => {
           >
             <FolderViewOutlined style={{ fontSize: '20px' }} />
           </Button>
-          <Button
-            size="large"
-            color="danger"
-            variant="text"
-            onClick={() => handleDelete(record.id)}
-            style={{ marginLeft: 5 }}
+          <Popconfirm
+            placement="bottom"
+            title={'Delete service'}
+            description={'Are you sure to delete this service ?'}
+            okText="Yes"
+            cancelText="No"
+            onConfirm={() => handleDelete(record.id)}
           >
-            <DeleteOutlined style={{ fontSize: '20px' }} />
-          </Button>
+            <Button
+              size="large"
+              color="danger"
+              variant="text"
+              // onClick={() => handleDelete(record.id)}
+              style={{ marginLeft: 5 }}
+            >
+              <DeleteOutlined style={{ fontSize: '20px' }} />
+            </Button>
+          </Popconfirm>
         </>
       ),
     },
@@ -430,6 +452,10 @@ const ServiceTable = () => {
         dataSource={data}
         pagination={{ pageSize: 5 }}
         locale={{ emptyText: 'No services found' }}
+        scroll={{
+          x: '100%',
+        }}
+        tableLayout="auto"
       />
       <DynamicFormModal
         title={serviceName}
@@ -441,7 +467,7 @@ const ServiceTable = () => {
       <Modal
         title={modalTitle}
         open={isModalVisible}
-        style={{ top: 120, maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}
+        style={{ top: 120, overflowY: 'auto', overflowX: 'hidden' }}
         width={1000}
         onCancel={handleCloseModal}
         footer={null}
@@ -454,7 +480,7 @@ const ServiceTable = () => {
         <Form
           form={form}
           onFinish={handleAddOrUpdate}
-          labelCol={{ span: 6 }}
+          labelCol={{ span: 4 }}
           wrapperCol={{ span: 17 }}
           style={{
             marginTop: 20,
@@ -475,7 +501,7 @@ const ServiceTable = () => {
               <Form.Item
                 placeholder="$"
                 name="price"
-                label="Price"
+                label="Price ($)"
                 rules={[{ required: true, message: 'Please input service price!' }]}
               >
                 <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
@@ -498,9 +524,7 @@ const ServiceTable = () => {
                   key={index}
                   size="small"
                   title={`Field ${index + 1}`}
-                  marginLeft={70}
                   style={{ marginBottom: 15 }}
-                  bodyStyle={{ marginLeft: 50 }}
                   extra={
                     <CloseOutlined
                       onClick={() => {
@@ -509,142 +533,141 @@ const ServiceTable = () => {
                     />
                   }
                 >
-                  <Row gutter={10}>
-                    <Col span={7}>
-                      <Form.Item
-                        label="Type"
-                        name={['formData', index, 'type']}
-                        style={{ marginBottom: 5, marginLeft: 34 }}
-                        labelCol={{ span: 6 }}
-                        initialValue={'input'}
-                        rules={[{ required: true, message: 'Please input field type' }]}
-                      >
-                        <Select onChange={(value) => handleFieldChange(index, 'type', value)}>
-                          <Select.Option value="input">Input</Select.Option>
-                          <Select.Option value="textarea">TextArea</Select.Option>
-                          <Select.Option value="select">Select</Select.Option>
-                          <Select.Option value="radio">Radio</Select.Option>
-                          <Select.Option value="checkbox">Checkbox</Select.Option>
-                          <Select.Option value="file">File</Select.Option>
-                        </Select>
-                      </Form.Item>
-                    </Col>
-                    <Col span={7}>
-                      <Form.Item
-                        label="Name"
-                        name={['formData', index, 'fieldname']}
-                        style={{ marginBottom: 5 }}
-                        initialValue={`field_${index + 1}`}
-                        rules={[
-                          { required: true, message: 'Please input field name' },
-                          {
-                            validator: async (_, fieldname) => {
-                              if (
-                                formDataArray.filter((r) => r.fieldname == fieldname).length >= 2
-                              ) {
-                                return Promise.reject(new Error('Field name is duplicated'))
-                              }
-                            },
-                          },
-                        ]}
-                      >
-                        <Input
-                          onChange={(e) => handleFieldChange(index, 'fieldname', e.target.value)}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={7}>
-                      <Form.Item
-                        label="Required"
-                        labelCol={{ span: 7 }}
-                        wrapperCol={{ span: 5 }}
-                        style={{ marginBottom: 5 }}
-                        name={['formData', index, 'required']}
-                      >
-                        <Checkbox
-                          checked={field.required}
-                          onChange={(e) => handleFieldChange(index, 'required', e.target.checked)}
-                        ></Checkbox>
-                      </Form.Item>
-                    </Col>
+                  <Form.Item
+                    label="Type"
+                    name={['formData', index, 'type']}
+                    style={{ marginBottom: 5 }}
+                    // labelCol={{ span: 6 }}
+                    initialValue={'input'}
+                    rules={[{ required: true, message: 'Please input field type' }]}
+                  >
+                    <Select onChange={(value) => handleFieldChange(index, 'type', value)}>
+                      <Select.Option value="input">Input</Select.Option>
+                      <Select.Option value="textarea">TextArea</Select.Option>
+                      <Select.Option value="select">Select</Select.Option>
+                      <Select.Option value="radio">Radio</Select.Option>
+                      <Select.Option value="checkbox">Checkbox</Select.Option>
+                      <Select.Option value="file">File</Select.Option>
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    label="Name"
+                    name={['formData', index, 'fieldname']}
+                    style={{ marginBottom: 5 }}
+                    initialValue={`field_${index + 1}`}
+                    rules={[
+                      { required: true, message: 'Please input field name' },
+                      {
+                        validator: async (_, fieldname) => {
+                          if (formDataArray.filter((r) => r.fieldname == fieldname).length >= 2) {
+                            return Promise.reject(new Error('Field name is duplicated'))
+                          }
+                        },
+                      },
+                    ]}
+                  >
+                    <Input
+                      onChange={(e) => handleFieldChange(index, 'fieldname', e.target.value)}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    label="Required"
+                    style={{ marginBottom: 5 }}
+                    name={['formData', index, 'required']}
+                  >
+                    <Checkbox
+                      checked={field.required}
+                      onChange={(e) => handleFieldChange(index, 'required', e.target.checked)}
+                    ></Checkbox>
+                  </Form.Item>
 
-                    {/* <Col span={2}>
+                  {/* <Col span={2}>
                       <Button type="primary" onClick={() => handleRemoveField(index)} danger>
                         Delete
                       </Button>
                     </Col> */}
-                  </Row>
-                  <Row gutter={10}>
-                    <Col span={20}>
-                      <Form.Item
-                        labelCol={{ span: 2 }}
-                        wrapperCol={{ span: 28 }}
-                        label="Label"
-                        name={['formData', index, 'label']}
-                        style={{ marginBottom: 5, marginLeft: 30 }}
-                        initialValue={''}
-                        rules={[{ required: true, message: 'Please input field label' }]}
-                      >
-                        <TextArea
-                          onChange={(e) => handleFieldChange(index, 'label', e.target.value)}
-                        />
-                      </Form.Item>
-                    </Col>
-                  </Row>
+
+                  <Form.Item
+                    label="Label"
+                    name={['formData', index, 'label']}
+                    style={{ marginBottom: 5 }}
+                    initialValue={''}
+                    rules={[{ required: true, message: 'Please input field label' }]}
+                  >
+                    <TextArea onChange={(e) => handleFieldChange(index, 'label', e.target.value)} />
+                  </Form.Item>
                   {(field.type === 'select' ||
                     field.type === 'radio' ||
                     field.type === 'checkbox') && (
                     <>
-                      <Row gutter={10} style={{ left: -15 }}>
-                        {field.option.map((Option, indexOption) => (
-                          <>
-                            <Col span={10}>
-                              <Form.Item
-                                labelCol={{ span: 6 }}
-                                wrapperCol={{ span: 30 }}
-                                label={`Option ${indexOption + 1}`}
-                                style={{ marginBottom: 5 }}
-                                name={['formData', index, 'option', indexOption]}
-                                initialValue={Option}
-                                rules={[{ required: true, message: 'Please input option' }]}
-                              >
-                                <Input.TextArea
-                                  rows={1}
-                                  onChange={(e) =>
-                                    handleFieldOptionChange(
-                                      index,
-                                      'option',
-                                      indexOption,
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              </Form.Item>
-                            </Col>
+                      {field.option.map((Option, indexOption) => (
+                        <>
+                          <Row>
+                            <Form.Item
+                              label={`Option ${indexOption + 1}`}
+                              style={{
+                                marginBottom: 5,
+                                width: '100%',
+                                zIndex: 10,
+                              }}
+                              name={['formData', index, 'option', indexOption]}
+                              initialValue={Option}
+                              rules={[{ required: true, message: 'Please input option' }]}
+                            >
+                              <Input.TextArea
+                                rows={1}
+                                onChange={(e) =>
+                                  handleFieldOptionChange(
+                                    index,
+                                    'option',
+                                    indexOption,
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                            </Form.Item>
                             {field.option.length > 1 && (
                               <>
-                                <Button
-                                  color="danger"
-                                  variant="link"
-                                  style={{ padding: '1px 13px 1px 1px' }}
-                                  onClick={(e) => handleDeleteOption(index, 'option', indexOption)}
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    width: 'calc(100% - 30px)',
+                                    textAlign: 'end',
+                                  }}
                                 >
-                                  x
-                                </Button>
+                                  <Button
+                                    color="danger"
+                                    variant="dashed"
+                                    style={{ zIndex: 20 }}
+                                    onClick={(e) =>
+                                      handleDeleteOption(index, 'option', indexOption)
+                                    }
+                                  >
+                                    X
+                                  </Button>
+                                </div>
                               </>
                             )}
-                          </>
-                        ))}
-
+                          </Row>
+                        </>
+                      ))}
+                      <Form.Item
+                        label={' '}
+                        colon={false}
+                        layout="horizontal"
+                        style={{
+                          marginBottom: 5,
+                        }}
+                      >
                         <Button
                           color="primary"
                           variant="dashed"
                           onClick={(e) => handleAddOption(index, 'option')}
-                          style={{ marginLeft: '5px' }}
+                          style={{ width: '100%' }}
                         >
-                          +
+                          + Add Option
                         </Button>
-                      </Row>
+                      </Form.Item>
                     </>
                   )}
                 </Card>
