@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Table, Space, Input, Button, Modal, Form, message, Row, Col, Checkbox, Radio } from 'antd'
+import { Space, Input, Button, Modal, Form, message, Row, Col, Checkbox, Radio } from 'antd'
+// import 'antd/dist/antd.css'
 import { useNavigate } from 'react-router-dom'
 import { updateData, createData, deleteData, getData } from '../../../api'
 import {
@@ -11,6 +12,7 @@ import {
   FileAddOutlined,
 } from '@ant-design/icons'
 import Highlighter from 'react-highlight-words'
+import Table from 'ant-responsive-table'
 
 const CustomerTable = () => {
   const [data, setData] = useState([])
@@ -132,7 +134,11 @@ const CustomerTable = () => {
   }, [])
 
   const handleError = (error) => {
-    message.error((error.response && error.response.data ? error.response.data.message: '') || error.message|| error.message)
+    message.error(
+      (error.response && error.response.data ? error.response.data.message : '') ||
+        error.message ||
+        error.message,
+    )
     if (error.status == 401) {
       navigate('/login')
     } else if (error.status == 500) {
@@ -206,6 +212,8 @@ const CustomerTable = () => {
       ellipsis: true,
       sorter: (a, b) => a.name.localeCompare(b.name),
       defaultSortOrder: 'ascend',
+      showOnResponse: true,
+      showOnDesktop: true,
     },
     {
       title: 'Username',
@@ -214,6 +222,8 @@ const CustomerTable = () => {
       width: 200,
       ellipsis: true,
       key: 'username',
+      showOnResponse: true,
+      showOnDesktop: true,
     },
     {
       title: 'Email',
@@ -221,6 +231,8 @@ const CustomerTable = () => {
       ...getColumnSearchProps('email'),
       width: 250,
       key: 'email',
+      showOnResponse: true,
+      showOnDesktop: true,
     },
     {
       title: 'Mobile',
@@ -228,8 +240,18 @@ const CustomerTable = () => {
       ...getColumnSearchProps('mobile'),
       width: 120,
       key: 'mobile',
+      showOnResponse: true,
+      showOnDesktop: true,
     },
-    { title: 'Work', dataIndex: 'work', ...getColumnSearchProps('work'), width: 120, key: 'work' },
+    {
+      title: 'Work',
+      dataIndex: 'work',
+      ...getColumnSearchProps('work'),
+      width: 120,
+      key: 'work',
+      showOnResponse: true,
+      showOnDesktop: true,
+    },
     {
       title: 'Verification',
       dataIndex: 'verification',
@@ -249,11 +271,7 @@ const CustomerTable = () => {
       onFilter: (value, record) => record.verification === value,
       //filterSearch: true,
       render: (text) => (
-        <div
-          style={{
-            textAlign: 'center',
-          }}
-        >
+        <div>
           {text ? (
             <CheckOutlined style={{ color: 'green', fontSize: '18px' }} />
           ) : (
@@ -261,6 +279,8 @@ const CustomerTable = () => {
           )}
         </div>
       ),
+      showOnResponse: true,
+      showOnDesktop: true,
     },
     {
       title: 'Action',
@@ -282,6 +302,8 @@ const CustomerTable = () => {
           </Button>
         </>
       ),
+      showOnResponse: true,
+      showOnDesktop: true,
     },
   ]
 
@@ -310,10 +332,14 @@ const CustomerTable = () => {
         </Col>
       </Row>
       <Table
-        columns={columns}
-        dataSource={data}
-        pagination={{ pageSize: 5 }}
-        locale={{ emptyText: 'No customers found' }}
+        antTableProps={{
+          showHeader: true,
+          columns: columns,
+          dataSource: data,
+          pagination: { pageSize: 5 },
+          locale: { emptyText: 'No customers found' },
+        }}
+        mobileBreakPoint={1300}
       />
       <Modal
         title={modalTitle}

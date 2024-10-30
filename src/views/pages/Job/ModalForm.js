@@ -62,58 +62,62 @@ const DynamicFormModal = ({ title, visible, onClose, formDataArray, onSubmit }) 
 
   const handleFileChange = async (index, { file, fileList: newFileList }) => {
     try {
-      let fileI = newFileList.find(f => f.uid == file.uid)
+      let fileI = newFileList.find((f) => f.uid == file.uid)
       if (fileI) {
-      const formFile = new FormData();
-      formFile.append('file', file); 
-      const response = await axios.post( BASE_URL + '/upload', formFile, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': 'Bearer ' + localStorage.getItem('CRM-token')
-        },
-      });
-      if (response.status === 200) {
-        message.success(`${file.name} uploaded successfully.`);
-        fileI.storagename = response.data.file.filename;
-        fileI.status = 'done'
-        fileI.url = BASE_URL + '/download/' + fileI.storagename;
-        setFileList((prev) => ({
-          ...prev,
-          [index]: newFileList, // Store file list under the form item index
-        }))
-      }
+        const formFile = new FormData()
+        formFile.append('file', file)
+        const response = await axios.post(BASE_URL + '/upload', formFile, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: 'Bearer ' + localStorage.getItem('CRM-token'),
+          },
+        })
+        if (response.status === 200) {
+          message.success(`${file.name} uploaded successfully.`)
+          fileI.storagename = response.data.file.filename
+          fileI.status = 'done'
+          fileI.url = BASE_URL + '/download/' + fileI.storagename
+          setFileList((prev) => ({
+            ...prev,
+            [index]: newFileList, // Store file list under the form item index
+          }))
+        }
       }
     } catch (error) {
-      message.error(`${file.name} upload failed.`);
+      message.error(`${file.name} upload failed.`)
     }
   }
 
   const handleDownloadFile = async (file) => {
     try {
-    await axios.get(file.url, {
-      responseType: 'blob',
-      headers: {
-        Authorization: 'Bearer ' + localStorage.getItem('CRM-token')
-      },
-    }).then((response) => {
-    const extname = file.name.toLowerCase().split('.')[file.name.toLowerCase().split('.').length - 1];
-    let contentType = 'application/octet-stream'; // Default content type
-    if (extname === 'png') {
-      contentType = 'image/png';
-    } else if (extname === 'jpg' || extname === 'jpeg') {
-      contentType = 'image/jpeg';
-    }
-    // const blob = new Blob([response.data], {type: contentType})
-    const url = URL.createObjectURL(response.data);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', file.name); // Specify the file name to download
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    })
+      await axios
+        .get(file.url, {
+          responseType: 'blob',
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('CRM-token'),
+          },
+        })
+        .then((response) => {
+          const extname = file.name.toLowerCase().split('.')[
+            file.name.toLowerCase().split('.').length - 1
+          ]
+          let contentType = 'application/octet-stream' // Default content type
+          if (extname === 'png') {
+            contentType = 'image/png'
+          } else if (extname === 'jpg' || extname === 'jpeg') {
+            contentType = 'image/jpeg'
+          }
+          // const blob = new Blob([response.data], {type: contentType})
+          const url = URL.createObjectURL(response.data)
+          const link = document.createElement('a')
+          link.href = url
+          link.setAttribute('download', file.name) // Specify the file name to download
+          document.body.appendChild(link)
+          link.click()
+          link.remove()
+        })
     } catch (error) {
-      message.error(`${file.name} download failed.`);
+      message.error(`${file.name} download failed.`)
     }
   }
 

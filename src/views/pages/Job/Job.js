@@ -280,7 +280,11 @@ const ServiceTable = () => {
   }, [user])
 
   const handleError = (error) => {
-    message.error((error.response && error.response.data ? error.response.data.message: '') || error.message|| error.message)
+    message.error(
+      (error.response && error.response.data ? error.response.data.message : '') ||
+        error.message ||
+        error.message,
+    )
     if (error.status == 401) {
       navigate('/login')
     } else if (error.status === 500) {
@@ -331,8 +335,8 @@ const ServiceTable = () => {
         getData('form'),
         getData('customer'),
         getData('employee'),
-        getData('assignment')
-      ]);
+        getData('assignment'),
+      ])
 
       let jobList = response0.data
       let formList = response2.data
