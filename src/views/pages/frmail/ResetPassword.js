@@ -11,7 +11,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilMagnifyingGlass } from '@coreui/icons'
 
-const Page404 = () => {
+const ResetPassword = () => {
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
       <CContainer>
@@ -24,9 +24,13 @@ const Page404 = () => {
                 The page you are looking for was not found.
               </p>
             </div>
-            <h6 className="text-body-secondary float-start">
-              Return to <a href="#">Home Page</a>{' '}
-            </h6>
+            <CInputGroup className="input-prepend">
+              <CInputGroupText>
+                <CIcon icon={cilMagnifyingGlass} />
+              </CInputGroupText>
+              <CFormInput type="text" placeholder="What are you looking for?" />
+              <CButton color="info">Search</CButton>
+            </CInputGroup>
           </CCol>
         </CRow>
       </CContainer>
@@ -34,4 +38,4 @@ const Page404 = () => {
   )
 }
 
-export default Page404
+export default ResetPassword
