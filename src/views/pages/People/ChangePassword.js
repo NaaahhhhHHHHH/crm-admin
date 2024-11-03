@@ -144,7 +144,10 @@ const EmployeeTable = () => {
             <Input />
           </Form.Item> */}
         <Form.Item name="password" label="New Password" rules={[{ required: true }]}>
-          <Input.Password />
+          <Input.Password 
+              pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+              title="Must contain at least one  number and one uppercase and lowercase letter, and at least 8 or more characters"
+          />
         </Form.Item>
         <Form.Item
           name="Confirm Password"
@@ -163,7 +166,10 @@ const EmployeeTable = () => {
             }),
           ]}
         >
-          <Input.Password />
+          <Input.Password 
+              pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+              title="Must contain at least one  number and one uppercase and lowercase letter, and at least 8 or more characters"
+          />
         </Form.Item>
         <Form.Item wrapperCol={{ xs: { span: 24, offset: 0 }, sm: { span: 16, offset: 8 } }}>
           <Button type="primary" htmlType="submit">

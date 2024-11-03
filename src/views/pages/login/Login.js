@@ -18,9 +18,11 @@ import {
   CRow,
   CFormCheck,
 } from '@coreui/react'
+import { Input } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
+import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -28,6 +30,11 @@ const Login = () => {
   // State for form inputs
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false);
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
   // const [errorMessage, setErrorMessage] = useState(null)
 
   // Handle role change
@@ -84,12 +91,23 @@ const Login = () => {
                         <CIcon icon={cilLockLocked} />
                       </CInputGroupText>
                       <CFormInput
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         placeholder="Password"
                         autoComplete="current-password"
                         onChange={(e) => setPassword(e.target.value)}
                         required
                       />
+                      <CButton
+                        type="button"
+                        onClick={togglePasswordVisibility}
+                        // color="white"
+                        style={{
+                          backgroundColor: "white",
+                        }}
+                        class="input-group-text"
+                      >
+                        {showPassword ? <EyeInvisibleOutlined/> : <EyeOutlined/>}
+                      </CButton>
                     </CInputGroup>
                     <CRow>
                       <CCol xs={4}>

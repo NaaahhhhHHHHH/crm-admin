@@ -450,9 +450,14 @@ const CustomerTable = () => {
           <Form.Item
             name="password"
             label={currentCustomer ? 'New Password' : 'Password'}
-            rules={[{ required: currentCustomer ? false : true }]}
+            rules={[
+              { required: currentCustomer ? false : true },
+            ]}
           >
-            <Input.Password />
+            <Input.Password 
+              pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+              title="Must contain at least one  number and one uppercase and lowercase letter, and at least 8 or more characters"
+            />
           </Form.Item>
           <Form.Item name="verification" label="Verification" initialValue={false}>
             <Radio.Group>

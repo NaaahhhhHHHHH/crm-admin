@@ -387,7 +387,10 @@ const OwnerTable = () => {
             label={currentOwner ? 'New Password' : 'Password'}
             rules={[{ required: currentOwner ? false : true }]}
           >
-            <Input.Password />
+            <Input.Password 
+              pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+              title="Must contain at least one  number and one uppercase and lowercase letter, and at least 8 or more characters"
+            />
           </Form.Item>
           <div style={{ textAlign: 'center' }}>
             <Button type="primary" htmlType="submit">
