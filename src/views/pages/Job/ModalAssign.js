@@ -12,10 +12,12 @@ import {
   Col,
   message,
   DatePicker,
+  Card,
 } from 'antd'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import { useSelector, useDispatch } from 'react-redux'
+import { CloseOutlined } from '@ant-design/icons'
 const AssignFormModal = ({
   title,
   visible,
@@ -280,24 +282,42 @@ const AssignFormModal = ({
             {fields.payment.method === 'Period' && (
               <>
                 {fields.payment.period.map((field, index) => (
-                  <Row key={index} gutter={10} style={{ position: 'relative', left: 88 }}>
-                    <Col span={8}>
+                  <>
+                    <Card
+                      size="small"
+                      key={index}
+                      title={`Period ${index + 1}`}
+                      style={{ marginBottom: 15 }}
+                      extra={
+                        fields.payment.period.length > 1 ? (
+                          <CloseOutlined onClick={() => handleDeletePeriod(index)} />
+                        ) : null
+                      }
+                    >
+                      {/* <Col span={8}> */}
                       <Form.Item
                         name={['payment', 'period', index, 'date']}
-                        label={`Period ${index + 1}`}
-                        labelCol={{ span: 30 }}
-                        wrapperCol={{ span: 30 }}
+                        label={`Date`}
+                        // labelCol={{ span: 30 }}
+                        // wrapperCol={{ span: 30 }}
+                        style={{ marginBottom: '5px' }}
                         rules={[{ required: true, message: 'Please choose date' }]}
                         value={field.date ? dayjs(field.date, dateFormat) : null}
                       >
-                        <DatePicker format={dateFormat} placeholder="Date" />
+                        <DatePicker
+                          format={dateFormat}
+                          placeholder="Date"
+                          style={{ width: '100%' }}
+                        />
                       </Form.Item>
-                    </Col>
-                    <Col span={6}>
+                      {/* </Col> */}
+                      {/* <Col span={6}> */}
                       <Form.Item
-                        wrapperCol={{ span: 30 }}
+                        // wrapperCol={{ span: 30 }}
                         name={['payment', 'period', index, 'budget']}
                         value={fields.payment.period[index].budget}
+                        style={{ marginBottom: '5px' }}
+                        label={'Budget ($)'}
                         rules={[
                           { required: true, message: 'Please input budget' },
                           // ({ getFieldValue }) => ({
@@ -312,35 +332,32 @@ const AssignFormModal = ({
                         // label={`Budget ${index + 1}`}
                         // value={field.budget}
                       >
-                        <InputNumber style={{ width: 150 }} placeholder="Budget" />
+                        <InputNumber placeholder="Budget" style={{ width: '100%' }} />
                       </Form.Item>
-                    </Col>
-                    {fields.payment.period.length > 1 && (
+                      {/* </Col> */}
+                      {/* {fields.payment.period.length > 1 && (
                       <>
                         <Button
                           color="danger"
                           variant="link"
                           style={{ padding: '1px 13px 1px 1px' }}
-                          onClick={(e) => handleDeletePeriod(index)}
+                          onClick={(e) => }
                         >
                           x
                         </Button>
                       </>
-                    )}
-                    {fields.payment.period.length == index + 1 && (
-                      <>
-                        <Button
-                          color="primary"
-                          variant="dashed"
-                          // style={{ padding: '1px 13px 1px 1px' }}
-                          onClick={(e) => handleAddPeriod()}
-                        >
-                          +
-                        </Button>
-                      </>
-                    )}
-                  </Row>
+                    )} */}
+                    </Card>
+                  </>
                 ))}
+                <Button
+                  color="primary"
+                  variant="dashed"
+                  style={{ width: '100%', marginBottom: '15px' }}
+                  onClick={(e) => handleAddPeriod()}
+                >
+                  + Add Period
+                </Button>
               </>
             )}
           </>

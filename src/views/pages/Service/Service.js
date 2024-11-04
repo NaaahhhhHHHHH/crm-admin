@@ -16,6 +16,8 @@ import {
   Space,
   Card,
   Popconfirm,
+  Radio,
+  DatePicker,
 } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -47,12 +49,17 @@ const ServiceTable = () => {
   const [form] = Form.useForm()
   const [currentStep, setCurrentStep] = useState(0)
   const [step1Values, setStep1Values] = useState({})
+  const [employeeData, setEmployeeData] = useState([])
   const [formDataArray, setFormDataArray] = useState([
     { type: 'input', label: '', required: false, fieldname: 'field_1' },
   ]) // Default one field
   const navigate = useNavigate()
 
   const [searchText, setSearchText] = useState('')
+  const [bluePrint, setBlueprint] = useState({
+    checked: false,
+    listE: [],
+  })
   const [searchedColumn, setSearchedColumn] = useState('')
   const searchInput = useRef(null)
 
@@ -192,8 +199,11 @@ const ServiceTable = () => {
 
   const loadServices = async () => {
     try {
-      const response = await getData('service')
-      setData(response.data)
+      const [response0, response1] = await Promise.all([getData('service'), getData('employee')])
+      setData(response0.data)
+      let employeeList = response1.data
+      let employeeOption = employeeList.map((r) => ({ label: r.name, value: r.id }))
+      setEmployeeData(employeeOption)
     } catch (error) {
       handleError(error)
     }
@@ -210,8 +220,9 @@ const ServiceTable = () => {
   const showModal = (service) => {
     setCurrentService(service)
     form.setFieldsValue(service)
-    if (service && service.formData) {
+    if (service && service.formData && service.blueprint) {
       setFormDataArray(service.formData) // Load existing formData
+      setBlueprint(service.blueprint)
     } else {
       setFormDataArray([
         {
@@ -221,6 +232,10 @@ const ServiceTable = () => {
           fieldname: `field_1`,
         },
       ])
+      setBlueprint({
+        checked: false,
+        listE: [],
+      })
     }
     setIsModalVisible(true)
     setCurrentStep(0)
@@ -270,6 +285,21 @@ const ServiceTable = () => {
   const handleCloseModal = () => {
     setIsModalVisible(false)
     setCurrentService(null)
+    setBlueprint({
+      checked: false,
+      listE: [
+        {
+          eid: null,
+          expire: 1,
+          reassignment: false,
+          payment: {
+            method: '1 Time',
+            budget: null,
+            currentbudget: null,
+          },
+        },
+      ],
+    })
     setFormDataArray([{ type: 'input', label: '', required: false, fieldname: `field_1` }])
     form.resetFields()
   }
@@ -430,6 +460,16 @@ const ServiceTable = () => {
     </div>
   )
 
+  const totalBudget = () => {
+    let newData = bluePrint.listE
+    let totalBudget = 0
+    newData.forEach((r) => {
+      let budget = r.payment.budget ? r.payment.budget : 0
+      totalBudget += budget
+    })
+    return totalBudget
+  }
+
   return (
     <>
       <Row style={{ display: 'block', marginBottom: 5, textAlign: 'right' }}>
@@ -513,6 +553,321 @@ const ServiceTable = () => {
               >
                 <TextArea rows={4} />
               </Form.Item>
+              <Form.Item label="Blue Print" name={['blueprint', 'checked']}>
+                <Checkbox
+                  checked={bluePrint.checked}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      const newData = form.getFieldsValue()
+                      newData.blueprint.checked = true
+                      newData.blueprint.listE = []
+                      form.setFieldsValue(newData)
+                      setBlueprint({
+                        checked: true,
+                        listE: [
+                          {
+                            eid: null,
+                            expire: 1,
+                            reassignment: false,
+                            payment: {
+                              method: '1 Time',
+                              budget: null,
+                              currentbudget: null,
+                            },
+                          },
+                        ],
+                      })
+                    } else {
+                      const newData = form.getFieldsValue()
+                      newData.blueprint.checked = false
+                      newData.blueprint.listE = [null]
+                      form.setFieldsValue(newData)
+                      setBlueprint({
+                        checked: false,
+                        listE: [],
+                      })
+                    }
+                  }}
+                />
+              </Form.Item>
+
+              {bluePrint.checked && (
+                <>
+                  {bluePrint.listE.map((field, index) => (
+                    <Card
+                      size="small"
+                      title={`Employee ${index + 1}`}
+                      style={{ marginBottom: 15 }}
+                      key={index}
+                      extra={
+                        <CloseOutlined
+                          onClick={() => {
+                            const newData = { ...bluePrint }
+                            newData.listE.splice(index, 1)
+                            setBlueprint(newData)
+                            const newForm = form.getFieldsValue()
+                            newForm.blueprint = newData
+                            form.setFieldsValue(newForm)
+                          }}
+                        />
+                      }
+                    >
+                      <Form.Item
+                        style={{
+                          marginBottom: 5,
+                          width: '100%',
+                          zIndex: 10,
+                        }}
+                        name={['blueprint', 'listE', index, 'eid']}
+                        label={`Employee`}
+                        rules={[{ required: true, message: 'Please select employee!' }]}
+                      >
+                        <Select
+                          onChange={(e) => {
+                            const newData = { ...bluePrint }
+                            newData.listE[index].eid = e
+                            setBlueprint(newData)
+                          }}
+                        >
+                          {employeeData
+                            .filter(
+                              (r) =>
+                                bluePrint.listE[index].eid == r.value ||
+                                !bluePrint.listE.find((re) => re.eid == r.value),
+                            )
+                            .map((option, idx) => (
+                              <Select.Option key={option.value} value={option.value}>
+                                {option.label}
+                              </Select.Option>
+                            ))}
+                        </Select>
+                      </Form.Item>
+                      <Form.Item
+                        style={{
+                          marginBottom: 5,
+                          width: '100%',
+                          zIndex: 10,
+                        }}
+                        name={['blueprint', 'listE', index, 'expire']}
+                        label={`Expire Date`}
+                        rules={[{ required: true, message: 'Please enter expire date!' }]}
+                      >
+                        <Input
+                          onChange={(e) => {
+                            const newData = { ...bluePrint }
+                            newData.listE[index].expire = e
+                            setBlueprint(newData)
+                          }}
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        style={{
+                          marginBottom: 5,
+                          width: '100%',
+                          zIndex: 10,
+                        }}
+                        name={['blueprint', 'listE', index, 'reassignment']}
+                        label={`Reassignment`}
+                        initialValue={false}
+                        value={
+                          bluePrint.listE[index].reassignment
+                            ? bluePrint.listE[index].reassignment
+                            : false
+                        }
+                      >
+                        <Radio.Group
+                          onChange={(e) => {
+                            const newData = { ...bluePrint }
+                            newData.listE[index].reassignment = e
+                            setBlueprint(newData)
+                          }}
+                        >
+                          <Radio value={false}>False</Radio>
+                          <Radio value={true}>True</Radio>
+                        </Radio.Group>
+                      </Form.Item>
+                      <Form.Item
+                        label="Payment method"
+                        style={{
+                          marginBottom: 5,
+                          width: '100%',
+                          zIndex: 10,
+                        }}
+                        name={['blueprint', 'listE', index, 'payment', 'method']}
+                        initialValue="1 Time"
+                        //value={fields.payment.method}
+                        // rules={[
+                        //   { required: true, message: 'Please choose payment method' },
+                        //   ({ getFieldValue }) => ({
+                        //     validator: (_, value) =>
+                        //       totalBudget() <= form.getFieldsValue().price
+                        //         ? Promise.resolve()
+                        //         : Promise.reject(
+                        //             new Error(
+                        //               `Total budget limit exceeded maximum ($${form.getFieldsValue().price})`,
+                        //             ),
+                        //           ),
+                        //   }),
+                        // ]}
+                      >
+                        <Select
+                          onChange={(e) => {
+                            const newData = { ...bluePrint }
+                            newData.listE[index].payment.method = e
+                            if (e == 'Period') {
+                              newData.listE[index].payment.period = [
+                                {
+                                  date: null,
+                                  budget: null,
+                                },
+                              ]
+                            }
+                            setBlueprint(newData)
+                          }}
+                        >
+                          <Select.Option key="1 Time" value="1 Time">
+                            1 Time
+                          </Select.Option>
+                          <Select.Option key="Period" value="Period">
+                            Period
+                          </Select.Option>
+                        </Select>
+                      </Form.Item>
+                      {bluePrint.listE[index].payment.method === '1 Time' && (
+                        <>
+                          <Form.Item
+                            name={['blueprint', 'listE', index, 'payment', 'budget']}
+                            label="Budget ($)"
+                            // value={fields.payment.budget}
+                            // max={100}
+                            rules={[
+                              { required: true, message: 'Please input budget' },
+                              // ({ getFieldValue }) => ({
+                              //   validator: (_, value) =>
+                              //     value <= maxBudget
+                              //       ? Promise.resolve()
+                              //       : Promise.reject(
+                              //           new Error(`Budget limit exceeded maximum ($${maxBudget})`),
+                              //         ),
+                              // }),
+                            ]}
+                          >
+                            <InputNumber
+                              onChange={(e) => {
+                                const newData = { ...bluePrint }
+                                newData.listE[index].payment.budget = e
+                                setBlueprint(newData)
+                              }}
+                              step={0.01}
+                              style={{ width: '100%' }}
+                            />
+                          </Form.Item>
+                        </>
+                      )}
+                      {bluePrint.listE[index].payment.method === 'Period' && (
+                        <>
+                          {bluePrint.listE[index].payment.period.map((field1, idx1) => (
+                            <>
+                              <Card
+                                size="small"
+                                key={idx1}
+                                title={`Period ${idx1 + 1}`}
+                                style={{ marginBottom: 15 }}
+                                extra={
+                                  bluePrint.listE[index].payment.period.length > 1 ? (
+                                    <CloseOutlined
+                                      onClick={() => {
+                                        const newData = { ...bluePrint }
+                                        newData.listE[index].payment.period = e
+                                        setBlueprint(newData)
+                                      }}
+                                    />
+                                  ) : null
+                                }
+                              >
+                                <Form.Item
+                                  name={['blueprint', 'listE', index, 'payment', 'period', index, 'date']}
+                                  label={`Date`}
+                                  style={{ marginBottom: '5px' }}
+                                  rules={[{ required: true, message: 'Please choose date' }]}
+                                  // value={field1.date ? dayjs(field.date, dateFormat) : null}
+                                >
+                                  <DatePicker
+                                    format={dateFormat}
+                                    placeholder="Date"
+                                    style={{ width: '100%' }}
+                                  />
+                                </Form.Item>
+                                <Form.Item
+                                  // wrapperCol={{ span: 30 }}
+                                  name={['blueprint', 'listE', index, 'payment', 'period', index, 'budget']}
+                                  // value={fields.payment.period[index].budget}
+                                  style={{ marginBottom: '5px' }}
+                                  label={'Budget ($)'}
+                                  rules={[
+                                    { required: true, message: 'Please input budget' },
+                                    // ({ getFieldValue }) => ({
+                                    //   validator: (_, value) =>
+                                    //     value <= maxBudget
+                                    //       ? Promise.resolve()
+                                    //       : Promise.reject(
+                                    //           new Error(`budget limit exceeded maximum ($${maxBudget})`),
+                                    //         ),
+                                    // }),
+                                  ]}
+                                >
+                                  <InputNumber placeholder="Budget" style={{ width: '100%' }} />
+                                </Form.Item>
+                              </Card>
+                            </>
+                          ))}
+                          <Button
+                            color="primary"
+                            variant="dashed"
+                            style={{ width: '100%', marginBottom: '15px' }}
+                            onClick={(e) => handleAddPeriod()}
+                          >
+                            + Add Period
+                          </Button>
+                        </>
+                      )}
+                    </Card>
+                  ))}
+                  <Form.Item
+                    label={' '}
+                    colon={false}
+                    layout="horizontal"
+                    style={{
+                      marginBottom: 5,
+                    }}
+                  >
+                    <Button
+                      color="primary"
+                      variant="dashed"
+                      onClick={(e) => {
+                        const newData = { ...bluePrint }
+                        newData.listE.push({
+                          eid: null,
+                          expire: 1,
+                          reassignment: false,
+                          payment: {
+                            method: '1 Time',
+                            budget: null,
+                            currentbudget: null,
+                          },
+                        })
+                        setBlueprint(newData)
+                        const newForm = form.getFieldsValue()
+                        newForm.blueprint = newData
+                        form.setFieldsValue(newForm)
+                      }}
+                      style={{ width: '100%' }}
+                    >
+                      + Add Employee
+                    </Button>
+                  </Form.Item>
+                </>
+              )}
             </>
           )}
 
@@ -526,11 +881,13 @@ const ServiceTable = () => {
                   title={`Field ${index + 1}`}
                   style={{ marginBottom: 15 }}
                   extra={
-                    <CloseOutlined
-                      onClick={() => {
-                        handleRemoveField(index)
-                      }}
-                    />
+                    formDataArray.length > 1 ? (
+                      <CloseOutlined
+                        onClick={() => {
+                          handleRemoveField(index)
+                        }}
+                      />
+                    ) : null
                   }
                 >
                   <Form.Item
