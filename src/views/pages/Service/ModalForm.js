@@ -74,7 +74,12 @@ const DynamicFormModal = ({ title, visible, onClose, formDataArray, onSubmit }) 
       width={700}
       style={{ top: 120, overflowY: 'auto', overflowX: 'hidden' }}
     >
-      <Form form={form} layout="vertical" onFinish={handleFinish}>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleFinish}
+        scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
+      >
         {fields.map((field, index) => {
           switch (field.type) {
             case 'input':

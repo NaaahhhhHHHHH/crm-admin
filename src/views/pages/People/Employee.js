@@ -357,6 +357,7 @@ const EmployeeTable = () => {
             name="name"
             label="Name"
             rules={[{ required: true, message: 'Please input name!' }]}
+            scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
           >
             <Input readOnly={role == 'employee'} />
           </Form.Item>

@@ -175,6 +175,7 @@ const AssignFormModal = ({
         onFinish={handleFinish}
         labelCol={{ span: 6 }}
         wrapperCol={{ span: 15 }}
+        scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
       >
         {fields && (
           <>
@@ -287,7 +288,7 @@ const AssignFormModal = ({
                       size="small"
                       key={index}
                       title={`Period ${index + 1}`}
-                      style={{ marginBottom: 15 }}
+                      style={{ marginBottom: 15, width: '80%', left: '10%' }}
                       extra={
                         fields.payment.period.length > 1 ? (
                           <CloseOutlined onClick={() => handleDeletePeriod(index)} />

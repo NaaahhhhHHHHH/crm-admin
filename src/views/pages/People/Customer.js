@@ -397,6 +397,7 @@ const CustomerTable = () => {
           onFinish={handleAddOrUpdate}
           labelCol={{ span: 6 }}
           wrapperCol={{ span: 15 }}
+          scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
         >
           <Form.Item
             name="name"

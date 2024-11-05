@@ -732,7 +732,7 @@ const ServiceTable = () => {
             marginTop: 20,
             maxWidth: 'none',
           }}
-          scrollToFirstError={true}
+          scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
         >
           <Form.Item
             name="budget"

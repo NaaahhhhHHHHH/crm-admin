@@ -84,6 +84,7 @@ const EmployeeTable = () => {
       <Form
         form={form}
         // layout="vertical"
+        scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
         onFinish={handleUpdate}
         labelCol={{
           xs: { span: 24 },
