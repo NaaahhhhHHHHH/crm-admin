@@ -220,18 +220,18 @@ const ServiceTable = () => {
 
   const showModal = (service) => {
     let serviceData = service
-    if (serviceData.blueprint && serviceData.blueprint.listE) {
-      serviceData.blueprint.listE.forEach((re) => {
-        if (re.payment && re.payment.method == 'Period') {
-          re.payment.period.forEach((pe) => {
-            pe.date = dayjs(pe.date, dateFormat)
-          })
-        }
-      })
-    }
-    setCurrentService(serviceData)
-    form.setFieldsValue(serviceData)
     if (serviceData && serviceData.formData && serviceData.blueprint) {
+      if (serviceData.blueprint && serviceData.blueprint.listE) {
+        serviceData.blueprint.listE.forEach((re) => {
+          if (re.payment && re.payment.method == 'Period') {
+            re.payment.period.forEach((pe) => {
+              pe.date = dayjs(pe.date, dateFormat)
+            })
+          }
+        })
+      }
+      setCurrentService(serviceData)
+      form.setFieldsValue(serviceData)
       setFormDataArray(serviceData.formData) // Load existing formData
       setBlueprint(serviceData.blueprint)
     } else {
