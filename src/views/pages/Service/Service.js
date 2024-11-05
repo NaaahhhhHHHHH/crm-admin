@@ -589,7 +589,7 @@ const ServiceTable = () => {
               >
                 <TextArea rows={4} />
               </Form.Item>
-              <Form.Item label="Blue Print" name={['blueprint', 'checked']}>
+              <Form.Item label="Blueprint" name={['blueprint', 'checked']}>
                 <Checkbox
                   checked={bluePrint.checked}
                   onChange={(e) => {
