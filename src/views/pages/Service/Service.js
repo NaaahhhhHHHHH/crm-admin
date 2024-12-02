@@ -33,6 +33,7 @@ import '../index.css'
 import { updateData, createData, deleteData, getData } from '../../../api'
 import Highlighter from 'react-highlight-words'
 import DynamicFormModal from './ModalForm'
+import { main } from '@popperjs/core'
 const dateFormat = 'YYYY/MM/DD'
 const timeFormat = 'YYYY/MM/DD hh:mm:ss'
 
@@ -49,6 +50,7 @@ const ServiceTable = () => {
   const [form] = Form.useForm()
   const [currentStep, setCurrentStep] = useState(0)
   const [step1Values, setStep1Values] = useState({})
+  const [step2Values, setStep2Values] = useState([])
   const [employeeData, setEmployeeData] = useState([])
   const [formDataArray, setFormDataArray] = useState([
     { type: 'input', label: '', required: false, fieldname: 'field_1' },
@@ -58,6 +60,14 @@ const ServiceTable = () => {
   const [searchText, setSearchText] = useState('')
   const [bluePrint, setBlueprint] = useState({
     checked: false,
+    listE: [],
+  })
+  const [maintain, setMaintain] = useState({
+    checked: false,
+    period: null,
+    price: null,
+    date: null,
+    remind: null,
     listE: [],
   })
   const [searchedColumn, setSearchedColumn] = useState('')
@@ -221,19 +231,31 @@ const ServiceTable = () => {
   const showModal = (service) => {
     let serviceData = service
     if (serviceData && serviceData.formData && serviceData.blueprint) {
-      if (serviceData.blueprint && serviceData.blueprint.listE) {
-        serviceData.blueprint.listE.forEach((re) => {
-          if (re.payment && re.payment.method == 'Period') {
-            re.payment.period.forEach((pe) => {
-              pe.date = dayjs(pe.date, dateFormat)
-            })
-          }
-        })
-      }
+      // if (serviceData.blueprint && serviceData.blueprint.listE) {
+      //   serviceData.blueprint.listE.forEach((re) => {
+      //     if (re.payment && re.payment.method == 'Period') {
+      //       re.payment.period.forEach((pe) => {
+      //         pe.date = dayjs(pe.date, dateFormat)
+      //       })
+      //     }
+      //   })
+      // }
       setCurrentService(serviceData)
       form.setFieldsValue(serviceData)
       setFormDataArray(serviceData.formData) // Load existing formData
       setBlueprint(serviceData.blueprint)
+      setMaintain(
+        serviceData.maintain
+          ? serviceData.maintain
+          : {
+              checked: false,
+              period: null,
+              price: null,
+              date: null,
+              remind: null,
+              listE: [],
+            },
+      )
     } else {
       setFormDataArray([
         {
@@ -245,6 +267,14 @@ const ServiceTable = () => {
       ])
       setBlueprint({
         checked: false,
+        listE: [],
+      })
+      setMaintain({
+        checked: false,
+        period: null,
+        price: null,
+        date: null,
+        remind: null,
         listE: [],
       })
     }
@@ -282,16 +312,16 @@ const ServiceTable = () => {
     try {
       let valid = await form.validateFields()
       let r = { ...step1Values }
-      if (r.blueprint && r.blueprint.listE) {
-        r.blueprint.listE.forEach((re) => {
-          if (re.payment && re.payment.method == 'Period') {
-            re.payment.period.forEach((pe) => {
-              pe.date = pe.date.format(dateFormat)
-            })
-          }
-        })
-      }
-      let formData = { ...r, formData: formDataArray } // Add formDataArray to form values
+      // if (r.blueprint && r.blueprint.listE) {
+      //   r.blueprint.listE.forEach((re) => {
+      //     if (re.payment && re.payment.method == 'Period') {
+      //       re.payment.period.forEach((pe) => {
+      //         pe.date = pe.date.format(dateFormat)
+      //       })
+      //     }
+      //   })
+      // }
+      let formData = { ...step1Values, formData: formDataArray, maintain: maintain } // Add formDataArray to form values
       let res = currentService
         ? await updateData('service', currentService.id, formData)
         : await createData('service', formData)
@@ -311,7 +341,7 @@ const ServiceTable = () => {
       listE: [
         {
           eid: null,
-          expire: 1,
+          expire: null,
           reassignment: false,
           status: 'Waiting',
           payment: {
@@ -330,11 +360,19 @@ const ServiceTable = () => {
     await form
       .validateFields()
       .then(() => {
-        setCurrentStep(currentStep + 1)
-        const values = form.getFieldsValue()
-        values.blueprint = { ...bluePrint }
-        setStep1Values(values)
-        console.log('Step 1 Values:', values)
+        if (currentStep == 0) {
+          setCurrentStep(currentStep + 1)
+          const values = form.getFieldsValue()
+          values.blueprint = { ...bluePrint }
+          setStep1Values(values)
+          console.log('Step 1 Values:', values)
+        } else if (currentStep == 1) {
+          setCurrentStep(currentStep + 1)
+          const values = form.getFieldsValue()
+          // values.blueprint = { ...bluePrint }
+          setStep2Values(values)
+          // console.log('Step 1 Values:', values)
+        }
       })
       .catch((info) => {
         form
@@ -496,6 +534,16 @@ const ServiceTable = () => {
     return totalBudget
   }
 
+  const totalBudgetMaintain = () => {
+    let newData = maintain.listE
+    let totalBudget = 0
+    newData.forEach((r) => {
+      let budget = r.payment.budget ? r.payment.budget : 0
+      totalBudget += budget
+    })
+    return totalBudget
+  }
+
   const dateFormat = 'YYYY/MM/DD'
 
   return (
@@ -543,6 +591,7 @@ const ServiceTable = () => {
         <Steps current={currentStep}>
           <Step title="Service Info" />
           <Step title="Format Form" />
+          <Step title="Maintain" />
         </Steps>
 
         <Form
@@ -574,7 +623,7 @@ const ServiceTable = () => {
                   { required: true, message: 'Please input service price!' },
                   ({ getFieldValue }) => ({
                     validator: (_, value) =>
-                      totalBudget() <= value
+                      totalBudget() <= value || value == undefined
                         ? Promise.resolve()
                         : Promise.reject(new Error(`Total budget limit exceeded maximum`)),
                   }),
@@ -588,6 +637,47 @@ const ServiceTable = () => {
                 rules={[{ required: true, message: 'Please input service description!' }]}
               >
                 <TextArea rows={4} />
+              </Form.Item>
+              <Form.Item name={['maintain', 'checked']} label="Maintain">
+                <Checkbox
+                  checked={maintain.checked}
+                  onChange={(e) => {
+                    // const newData = form.getFieldsValue()
+                    // newData.maintain.checked = e.target.checked
+                    // form.setFieldsValue(newData)
+                    if (!e.target.checked) {
+                      setMaintain({
+                        checked: false,
+                        period: null,
+                        price: null,
+                        date: null,
+                        remind: null,
+                        listE: [],
+                      })
+                    } else {
+                      setMaintain({
+                        checked: true,
+                        period: null,
+                        price: null,
+                        date: null,
+                        remind: null,
+                        listE: [
+                          {
+                            eid: null,
+                            expire: null,
+                            reassignment: false,
+                            status: 'Waiting',
+                            payment: {
+                              method: '1 Time',
+                              budget: null,
+                              currentbudget: null,
+                            },
+                          },
+                        ],
+                      })
+                    }
+                  }}
+                ></Checkbox>
               </Form.Item>
               <Form.Item label="Blueprint" name={['blueprint', 'checked']}>
                 <Checkbox
@@ -603,7 +693,7 @@ const ServiceTable = () => {
                         listE: [
                           {
                             eid: null,
-                            expire: 1,
+                            expire: null,
                             reassignment: false,
                             status: 'Waiting',
                             payment: {
@@ -637,16 +727,18 @@ const ServiceTable = () => {
                       style={{ marginBottom: 15, width: '80%', left: '10%' }}
                       key={index}
                       extra={
-                        <CloseOutlined
-                          onClick={() => {
-                            const newData = { ...bluePrint }
-                            newData.listE.splice(index, 1)
-                            setBlueprint(newData)
-                            const newForm = form.getFieldsValue()
-                            newForm.blueprint = newData
-                            form.setFieldsValue(newForm)
-                          }}
-                        />
+                        bluePrint.listE.length > 1 ? (
+                          <CloseOutlined
+                            onClick={() => {
+                              const newData = { ...bluePrint }
+                              newData.listE.splice(index, 1)
+                              setBlueprint(newData)
+                              const newForm = form.getFieldsValue()
+                              newForm.blueprint = newData
+                              form.setFieldsValue(newForm)
+                            }}
+                          />
+                        ) : null
                       }
                     >
                       <Form.Item
@@ -841,10 +933,10 @@ const ServiceTable = () => {
                                     idx1,
                                     'date',
                                   ]}
-                                  label={`Date`}
+                                  label={`Pay after`}
                                   style={{ marginBottom: '5px' }}
                                   rules={[
-                                    { required: true, message: 'Please choose date' },
+                                    { required: true, message: 'Please input payment date' },
                                     // ({ getFieldValue }) => ({
                                     //   validator: (_, value) =>
                                     //     value
@@ -861,9 +953,9 @@ const ServiceTable = () => {
                                   //     : null
                                   // }
                                 >
-                                  <DatePicker
-                                    format={dateFormat}
-                                    placeholder="Date"
+                                  <InputNumber
+                                    // format={dateFormat}
+                                    placeholder="Day"
                                     style={{ width: '100%' }}
                                     // value={
                                     //   bluePrint.listE[index].payment.period[idx1].date
@@ -955,7 +1047,7 @@ const ServiceTable = () => {
                       const newData = { ...bluePrint }
                       newData.listE.push({
                         eid: null,
-                        expire: 1,
+                        expire: null,
                         reassignment: false,
                         status: 'Waiting',
                         payment: {
@@ -1147,18 +1239,455 @@ const ServiceTable = () => {
             </>
           )}
 
+          {currentStep === 2 && (
+            <>
+              <Form.Item
+                label="Payment period"
+                // style={{
+                //   marginBottom: 5,
+                //   // width: '100%',
+                //   zIndex: 10,
+                // }}
+                name={['maintain', 'period']}
+                rules={[{ required: true, message: 'Please select period' }]}
+              >
+                <Select
+                  onChange={(e) => {
+                    const newData = { ...maintain }
+                    newData.period = e
+                    setMaintain(newData)
+                  }}
+                >
+                  <Select.Option key={1} value={1}>
+                    1 Month
+                  </Select.Option>
+                  <Select.Option key={3} value={3}>
+                    3 Months
+                  </Select.Option>
+                  <Select.Option key={6} value={6}>
+                    6 Months
+                  </Select.Option>
+                  <Select.Option key={12} value={12}>
+                    12 Months
+                  </Select.Option>
+                </Select>
+              </Form.Item>
+              <Form.Item
+                placeholder="$"
+                name={['maintain', 'price']}
+                label="Price ($)"
+                rules={[
+                  { required: true, message: 'Please input service maintain price!' },
+                  ({ getFieldValue }) => ({
+                    validator: (_, value) =>
+                      totalBudgetMaintain() <= value || value == undefined
+                        ? Promise.resolve()
+                        : Promise.reject(new Error(`Total budget limit exceeded maximum`)),
+                  }),
+                ]}
+              >
+                <InputNumber
+                  onChange={(e) => {
+                    const newData = { ...maintain }
+                    newData.price = e
+                    setMaintain(newData)
+                  }}
+                  min={0}
+                  step={0.01}
+                  style={{ width: '100%' }}
+                />
+              </Form.Item>
+              <Form.Item
+                label="Maturity date"
+                // style={{
+                //   marginBottom: 5,
+                //   // width: '100%',
+                //   zIndex: 10,
+                // }}
+                name={['maintain', 'date']}
+              >
+                <InputNumber
+                  onChange={(e) => {
+                    const newData = { ...maintain }
+                    newData.date = e
+                    setMaintain(newData)
+                  }}
+                  placeholder="Date"
+                  style={{ width: '100%' }}
+                ></InputNumber>
+              </Form.Item>
+              <Form.Item
+                label="Remind before"
+                // style={{
+                //   marginBottom: 5,
+                //   // width: '100%',
+                //   zIndex: 10,
+                // }}
+                name={['maintain', 'remind']}
+                rules={[{ required: true, message: 'Please input reminder date' }]}
+              >
+                <InputNumber
+                  onChange={(e) => {
+                    const newData = { ...maintain }
+                    newData.remind = e
+                    setMaintain(newData)
+                  }}
+                  placeholder="Day"
+                  style={{ width: '100%' }}
+                ></InputNumber>
+              </Form.Item>
+              {maintain.listE.map((field, index) => (
+                <Card
+                  size="small"
+                  title={`Employee ${index + 1}`}
+                  style={{ marginBottom: 15, width: '80%', left: '10%' }}
+                  key={index}
+                  extra={
+                    maintain.listE.length > 1 ? (
+                      <CloseOutlined
+                        onClick={() => {
+                          const newData = { ...maintain }
+                          newData.listE.splice(index, 1)
+                          setMaintain(newData)
+                          const newForm = form.getFieldsValue()
+                          newForm.maintain = newData
+                          form.setFieldsValue(newForm)
+                        }}
+                      />
+                    ) : null
+                  }
+                >
+                  <Form.Item
+                    style={{
+                      marginBottom: 5,
+                      width: '100%',
+                      zIndex: 10,
+                    }}
+                    name={['maintain', 'listE', index, 'eid']}
+                    label={`Employee`}
+                    rules={[{ required: true, message: 'Please select employee!' }]}
+                  >
+                    <Select
+                      onChange={(e) => {
+                        const newData = { ...maintain }
+                        newData.listE[index].eid = e
+                        setMaintain(newData)
+                      }}
+                    >
+                      {employeeData
+                        .filter(
+                          (r) =>
+                            maintain.listE[index].eid == r.value ||
+                            !maintain.listE.find((re) => re.eid == r.value),
+                        )
+                        .map((option, idx) => (
+                          <Select.Option key={option.value} value={option.value}>
+                            {option.label}
+                          </Select.Option>
+                        ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    style={{
+                      marginBottom: 5,
+                      width: '100%',
+                      zIndex: 10,
+                    }}
+                    name={['maintain', 'listE', index, 'expire']}
+                    label={`Expire Date`}
+                    rules={[{ required: true, message: 'Please enter expire date!' }]}
+                  >
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      onChange={(e) => {
+                        const newData = { ...maintain }
+                        newData.listE[index].expire = e
+                        setMaintain(newData)
+                      }}
+                    />
+                  </Form.Item>
+                  <Form.Item
+                    style={{
+                      marginBottom: 5,
+                      width: '100%',
+                      zIndex: 10,
+                    }}
+                    name={['maintain', 'listE', index, 'reassignment']}
+                    label={`Reassignment`}
+                    initialValue={false}
+                    value={
+                      maintain.listE[index].reassignment
+                        ? maintain.listE[index].reassignment
+                        : false
+                    }
+                  >
+                    <Radio.Group
+                      onChange={(e) => {
+                        const newData = { ...maintain }
+                        newData.listE[index].reassignment = e.target.value
+                        setMaintain(newData)
+                      }}
+                    >
+                      <Radio value={false}>False</Radio>
+                      <Radio value={true}>True</Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                  <Form.Item
+                    label="Payment method"
+                    style={{
+                      marginBottom: 5,
+                      width: '100%',
+                      zIndex: 10,
+                    }}
+                    name={['maintain', 'listE', index, 'payment', 'method']}
+                    initialValue="1 Time"
+                    //value={fields.payment.method}
+                    // rules={[
+                    //   { required: true, message: 'Please choose payment method' },
+                    //   ({ getFieldValue }) => ({
+                    //     validator: (_, value) =>
+                    //       totalBudget() <= form.getFieldsValue().price
+                    //         ? Promise.resolve()
+                    //         : Promise.reject(
+                    //             new Error(
+                    //               `Total budget limit exceeded maximum ($${form.getFieldsValue().price})`,
+                    //             ),
+                    //           ),
+                    //   }),
+                    // ]}
+                  >
+                    <Select
+                      onChange={(e) => {
+                        const newData = { ...maintain }
+                        newData.listE[index].payment.method = e
+                        newData.listE[index].payment.budget = null
+                        newData.listE[index].payment.currentbudget = null
+                        if (e == 'Period') {
+                          newData.listE[index].payment.period = [
+                            {
+                              date: null,
+                              budget: null,
+                            },
+                          ]
+                        }
+                        setMaintain(newData)
+                      }}
+                    >
+                      <Select.Option key="1 Time" value="1 Time">
+                        1 Time
+                      </Select.Option>
+                      <Select.Option key="Period" value="Period">
+                        Period
+                      </Select.Option>
+                    </Select>
+                  </Form.Item>
+                  {maintain.listE[index].payment.method === '1 Time' && (
+                    <>
+                      <Form.Item
+                        name={['maintain', 'listE', index, 'payment', 'budget']}
+                        label="Budget ($)"
+                        // value={fields.payment.budget}
+                        // max={100}
+                        rules={[
+                          { required: true, message: 'Please input budget' },
+                          // ({ getFieldValue }) => ({
+                          //   validator: (_, value) =>
+                          //     value <= maxBudget
+                          //       ? Promise.resolve()
+                          //       : Promise.reject(
+                          //           new Error(`Budget limit exceeded maximum ($${maxBudget})`),
+                          //         ),
+                          // }),
+                        ]}
+                      >
+                        <InputNumber
+                          onChange={(e) => {
+                            const newData = { ...maintain }
+                            newData.listE[index].payment.budget = e
+                            newData.listE[index].payment.currentbudget = e
+                            setMaintain(newData)
+                          }}
+                          step={0.01}
+                          style={{ width: '100%' }}
+                        />
+                      </Form.Item>
+                    </>
+                  )}
+                  {maintain.listE[index].payment.method === 'Period' && (
+                    <>
+                      {maintain.listE[index].payment.period.map((field1, idx1) => (
+                        <>
+                          <Card
+                            size="small"
+                            key={idx1}
+                            title={`Period ${idx1 + 1}`}
+                            style={{ marginBottom: 15, width: '80%', left: '10%' }}
+                            extra={
+                              maintain.listE[index].payment.period.length > 1 ? (
+                                <CloseOutlined
+                                  onClick={() => {
+                                    const newData = { ...maintain }
+                                    newData.listE[index].payment.budget -=
+                                      newData.listE[index].payment.period[idx1].budget
+                                    newData.listE[index].payment.period.splice(idx1, 1)
+                                    setMaintain(newData)
+                                    const newForm = form.getFieldsValue()
+                                    newForm.maintain = newData
+                                    form.setFieldsValue(newForm)
+                                  }}
+                                />
+                              ) : null
+                            }
+                          >
+                            <Form.Item
+                              name={['maintain', 'listE', index, 'payment', 'period', idx1, 'date']}
+                              label={`Pay after`}
+                              style={{ marginBottom: '5px' }}
+                              rules={[
+                                { required: true, message: 'Please input payment date' },
+                                // ({ getFieldValue }) => ({
+                                //   validator: (_, value) =>
+                                //     value
+                                //       ? Promise.resolve()
+                                //       : Promise.reject(new Error(`Please choose date`)),
+                                // }),
+                              ]}
+                              // initialValue={
+                              //   bluePrint.listE[index].payment.period[idx1].date
+                              //     ? dayjs(
+                              //         bluePrint.listE[index].payment.period[idx1].date,
+                              //         dateFormat,
+                              //       )
+                              //     : null
+                              // }
+                            >
+                              <InputNumber
+                                // format={dateFormat}
+                                placeholder="Day"
+                                style={{ width: '100%' }}
+                                // value={
+                                //   bluePrint.listE[index].payment.period[idx1].date
+                                //     ? dayjs(
+                                //         bluePrint.listE[index].payment.period[idx1].date,
+                                //         dateFormat,
+                                //       )
+                                //     : null
+                                // }
+                                onChange={(e) => {
+                                  const newData = { ...maintain }
+                                  newData.listE[index].payment.period[idx1].date = e
+                                  // ? e.format(dateFormat)
+                                  // : null
+                                  setMaintain(newData)
+                                  const newForm = form.getFieldsValue()
+                                  newForm.maintain = newData
+                                  form.setFieldsValue(newForm)
+                                }}
+                              />
+                            </Form.Item>
+                            <Form.Item
+                              // wrapperCol={{ span: 30 }}
+                              name={[
+                                'maintain',
+                                'listE',
+                                index,
+                                'payment',
+                                'period',
+                                idx1,
+                                'budget',
+                              ]}
+                              // value={fields.payment.period[index].budget}
+                              style={{ marginBottom: '5px' }}
+                              label={'Budget ($)'}
+                              rules={[
+                                { required: true, message: 'Please input budget' },
+                                // ({ getFieldValue }) => ({
+                                //   validator: (_, value) =>
+                                //     value <= maxBudget
+                                //       ? Promise.resolve()
+                                //       : Promise.reject(
+                                //           new Error(`budget limit exceeded maximum ($${maxBudget})`),
+                                //         ),
+                                // }),
+                              ]}
+                            >
+                              <InputNumber
+                                onChange={(e) => {
+                                  const newData = { ...maintain }
+                                  newData.listE[index].payment.budget +=
+                                    e - newData.listE[index].payment.period[idx1].budget
+                                  newData.listE[index].payment.currentbudget =
+                                    newData.listE[index].payment.budget
+                                  newData.listE[index].payment.period[idx1].budget = e
+                                  setMaintain(newData)
+                                }}
+                                placeholder="Budget"
+                                step={0.01}
+                                style={{ width: '100%' }}
+                              />
+                            </Form.Item>
+                          </Card>
+                        </>
+                      ))}
+                      <Button
+                        color="primary"
+                        variant="dashed"
+                        style={{ width: '80%', left: '10%', marginBottom: '15px' }}
+                        onClick={(e) => {
+                          const newData = { ...maintain }
+                          newData.listE[index].payment.period.push({
+                            budget: null,
+                            date: null,
+                          })
+                          setMaintain(newData)
+                        }}
+                      >
+                        + Add Period
+                      </Button>
+                    </>
+                  )}
+                </Card>
+              ))}
+              <Button
+                color="primary"
+                variant="dashed"
+                onClick={(e) => {
+                  const newData = { ...maintain }
+                  newData.listE.push({
+                    eid: null,
+                    expire: null,
+                    reassignment: false,
+                    status: 'Waiting',
+                    payment: {
+                      method: '1 Time',
+                      budget: null,
+                      currentbudget: null,
+                    },
+                  })
+                  setMaintain(newData)
+                  const newForm = form.getFieldsValue()
+                  newForm.maintain = newData
+                  form.setFieldsValue(newForm)
+                }}
+                style={{ width: '80%', left: '10%' }}
+              >
+                + Add Employee
+              </Button>
+            </>
+          )}
+
           <div style={{ textAlign: 'center', marginTop: 20 }}>
             {currentStep > 0 && (
-              <Button style={{ marginRight: 40 }} onClick={handlePreviousStep}>
+              <Button style={{ marginRight: 30 }} onClick={handlePreviousStep}>
                 Previous
               </Button>
             )}
-            {currentStep < 1 && (
-              <Button type="primary" onClick={handleNextStep}>
+            {(currentStep === 0 || (currentStep === 1 && maintain.checked)) && (
+              <Button style={{ marginRight: 30 }} type="primary" onClick={handleNextStep}>
                 Next
               </Button>
             )}
-            {currentStep === 1 && (
+            {((currentStep === 1 && !maintain.checked) || currentStep === 2) && (
               <Button type="primary" htmlType="submit">
                 {currentService ? 'Update' : 'Add'}
               </Button>
