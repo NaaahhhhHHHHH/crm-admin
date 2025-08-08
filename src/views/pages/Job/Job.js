@@ -21,6 +21,7 @@ import {
   Popconfirm,
 } from 'antd'
 import { useNavigate } from 'react-router-dom'
+import html2pdf from 'html2pdf.js';
 import {
   SearchOutlined,
   CloseOutlined,
@@ -43,8 +44,19 @@ import { left, right } from '@popperjs/core'
 const dateFormat = 'YYYY/MM/DD'
 const timeFormat = 'YYYY/MM/DD hh:mm:ss'
 
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { pdf, PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import ReactDOM from 'react-dom';
+
 const { Step } = Steps
 const { TextArea } = Input
+import axios from 'axios'
+const apiUrl =
+  import.meta.env.MODE == 'product' ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_LOCAL
+const BASE_URL = `${apiUrl}/api`
 
 const ServiceTable = () => {
   const [data, setData] = useState([])
@@ -77,6 +89,7 @@ const ServiceTable = () => {
 
   const [searchText, setSearchText] = useState('')
   const [searchedColumn, setSearchedColumn] = useState('')
+  const [viewMode, setViewMode] = useState('table') // 'table' | 'calendar'
   const searchInput = useRef(null)
   const statusList = [
     {
@@ -443,39 +456,6 @@ const ServiceTable = () => {
     form.resetFields()
   }
 
-  // const handleNextStep = () => {
-  //   form
-  //     .validateFields()
-  //     .then(() => {
-  //       setCurrentStep(currentStep + 1)
-  //       const values = form.getFieldsValue()
-  //       setStep1Values(values)
-  //       console.log('Step 1 Values:', values)
-  //     })
-  //     .catch((info) => {
-  //       console.log('Validation Failed:', info)
-  //     })
-  // }
-
-  // const handlePreviousStep = () => {
-  //   setCurrentStep(currentStep - 1)
-  // }
-
-  // const handleChangeService = (value) => {
-  //   if (!currentForm || value != currentForm.sid) {
-  //     let findForm = serviceData.find((r) => r.value == value)
-  //     let formD = findForm.data ? findForm.data : []
-  //     setFormDataArray(formD)
-  //     // let fData = { ...currentForm }
-  //     // fData.data = formD
-  //     form.setFieldValue('data', formD)
-  //     console.log(formD)
-  //   } else {
-  //     setFormDataArray(currentForm.data)
-  //     form.setFieldValue('data', currentForm.data)
-  //   }
-  // }
-
   const columns = [
     {
       title: 'ID',
@@ -654,33 +634,344 @@ const ServiceTable = () => {
     maxWidth: '95%',
   }
 
+  const events = data.map((job) => ({
+    id: job.id,
+    title: `${job.sname}
+    ${job.cname}`,
+    start: dayjs(job.createdAt).format("YYYY-MM-DD"),
+  }));
+
+  // Utility: Split an array into chunks of `size` items
+function chunkArray(items, size) {
+  const chunks = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
+// A wrapper to render a full-page background behind every Page
+const PageWithBackground = ({ bgDataURL, styles, children }) => (
+  <Page size="A4" style={styles.page}>
+    <Image src={bgDataURL} style={styles.background} fixed />
+    {children}
+  </Page>
+);
+
+const downloadInvoicePDF = async (invoiceData) => {
+  // Convert a Blob to a Data URL
+  const toDataURL = blob =>
+    new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+
+  // 1. Fetch logo and background images
+  const [logoRes, bgRes] = await Promise.all([
+    fetch(`${BASE_URL}/downloadLogo`),
+    fetch(`${BASE_URL}/downloadBackground`),
+  ]);
+  const [logoBlob, bgBlob] = await Promise.all([
+    logoRes.blob(),
+    bgRes.blob(),
+  ]);
+  const [logoDataURL, bgDataURL] = await Promise.all([
+    toDataURL(logoBlob),
+    toDataURL(bgBlob),
+  ]);
+
+  // 2. Define styles
+  const styles = StyleSheet.create({
+    page: {
+      position: 'relative',
+      paddingTop: 30,
+      paddingBottom: 30,
+      paddingLeft: 40,
+      paddingRight: 40,
+      fontSize: 9,
+      fontFamily: 'Helvetica',
+    },
+    background: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '108%',
+      zIndex: -1,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 20
+    },
+    logo: { height: 30, marginBottom: 12 },
+    companyBlock: { marginBottom: 20 },
+    invoiceTitle: {
+      fontSize: 18,
+      textAlign: 'center',
+      marginBottom: 20,
+      textTransform: 'uppercase',
+    },
+    section: { marginBottom: 12 },
+    tableHeader: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderBottomColor: '#444',
+      paddingBottom: 4,
+      marginBottom: 4,
+      alignItems: 'center',
+    },
+    tableRow: {
+      flexDirection: 'row',
+      borderBottomWidth: 0.5,
+      borderBottomColor: '#bbb',
+      paddingVertical: 3,
+      alignItems: 'center',
+    },
+    colProduct: { flex: 4, textAlign: 'left' },
+    colQty: { flex: 1, textAlign: 'center' },
+    colPrice: { flex: 1, textAlign: 'right' },
+    totalsContainer: {
+      marginTop: 20,
+      flexDirection: 'column',
+      alignItems: 'flex-end',
+    },
+    totalLine: {
+      flexDirection: 'row',
+      width: '40%',
+      justifyContent: 'space-between',
+      paddingVertical: 2,
+    },
+    totalLabel: { textAlign: 'left' },
+    totalValue: { textAlign: 'right' },
+  });
+
+  // 3. Paginate products: assume ~12 rows per page
+  const productPages = chunkArray(invoiceData.products, 12);
+
+  // 4. Build the PDF document
+  const InvoiceDoc = (
+    <Document>
+      {productPages.map((prodChunk, pageIndex) => (
+        <PageWithBackground
+          key={pageIndex}
+          bgDataURL={bgDataURL}
+          styles={styles}
+        >
+          {/* FIRST PAGE: Logo + Company + INVOICE + Billing & Invoice info */}
+          {pageIndex === 0 && (
+            <>
+              <View style={styles.infoRow}>
+                <Image src={logoDataURL} style={styles.logo} fixed/>
+                <View style={styles.companyBlock}>
+                  <Text>Allinclicks</Text>
+                  <Text>800 Walnut Creek Dr NW</Text>
+                  <Text>Lilburn, GA 30047</Text>
+                  <Text>United States (US)</Text>
+                </View>
+              </View>
+
+              <Text style={styles.invoiceTitle}>Invoice</Text>
+              <View style={styles.infoRow}>
+                <View style={styles.section}>
+                  <Text>{invoiceData.customer.name}</Text>
+                  <Text>{invoiceData.customer.address}</Text>
+                  <Text>{invoiceData.customer.cityStateZip}</Text>
+                  <Text>{invoiceData.customer.email}</Text>
+                  <Text>{invoiceData.customer.phone}</Text>
+                </View>
+
+                <View style={styles.section}>
+                  <Text>Ship to:</Text>
+                  <Text>{invoiceData.customer.name}</Text>
+                  <Text>{invoiceData.customer.address}</Text>
+                  <Text>{invoiceData.customer.cityStateZip}</Text>
+                  <Text>{invoiceData.customer.phone}</Text>
+                </View>
+
+                <View style={styles.section}>
+                  <Text>Invoice Number: {invoiceData.invoiceNumber}</Text>
+                  <Text>Invoice Date: {invoiceData.invoiceDate}</Text>
+                  <Text>Order Number: {invoiceData.orderNumber}</Text>
+                  <Text>Order Date: {invoiceData.orderDate}</Text>
+                  <Text>Payment Method: {invoiceData.paymentMethod}</Text>
+                </View>
+              </View>
+            </>
+          )}
+
+          {/* PRODUCT TABLE */}
+          <View style={styles.section}>
+            <View style={styles.tableHeader}>
+              <Text style={styles.colProduct}>Product</Text>
+              <Text style={styles.colQty}>Quantity</Text>
+              <Text style={styles.colPrice}>Price</Text>
+            </View>
+            {prodChunk.map((item, i) => (
+              <View key={i} style={styles.tableRow}>
+                <Text style={styles.colProduct}>{item.name}</Text>
+                <Text style={styles.colQty}>{item.quantity}</Text>
+                <Text style={styles.colPrice}>
+                  ${item.price.toFixed(2)}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* LAST PAGE: Email/Phone + Ship To + Totals */}
+          {pageIndex === productPages.length - 1 && (
+            <>
+              <View style={styles.section}>
+                <View style={styles.tableHeader}>
+                  <Text style={styles.colProduct}>Product</Text>
+                  <Text style={styles.colQty}>Quantity</Text>
+                  <Text style={styles.colPrice}>Price</Text>
+                </View>
+                {invoiceData.shipProducts.map((sp, j) => (
+                  <View key={j} style={styles.tableRow}>
+                    <Text style={styles.colProduct}>{sp.name}</Text>
+                    <Text style={styles.colQty}>{sp.quantity}</Text>
+                    <Text style={styles.colPrice}>
+                      ${sp.price.toFixed(2)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.totalsContainer}>
+                <View style={styles.totalLine}>
+                  <Text style={styles.totalLabel}>Subtotal</Text>
+                  <Text style={styles.totalValue}>
+                    ${invoiceData.subtotal.toFixed(2)}
+                  </Text>
+                </View>
+                <View style={styles.totalLine}>
+                  <Text style={styles.totalLabel}>Total</Text>
+                  <Text style={styles.totalValue}>
+                    ${invoiceData.total.toFixed(2)}
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
+        </PageWithBackground>
+      ))}
+    </Document>
+  );
+
+  // 5. Generate the PDF blob and trigger download
+  const blob = await pdf(InvoiceDoc).toBlob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `invoice-${invoiceData.invoiceNumber}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+  }
+  
+  const renderEventContent = (eventInfo) => {
+    const job = data.find((j) => j.id == eventInfo.event.id);
+    const status = statusList.find((s) => s.value == job?.status);
+  
+    return (
+      <div
+        style={{
+          backgroundColor: status?.color == "geekblue" ? "#3788d8" : status?.color,
+          color: "black",
+          padding: "2px 6px",
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: 500,
+          whiteSpace: "pre",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          cursor: "pointer",
+        }}
+        title={`${job?.sname} - ${job?.cname}`}
+      >
+        {`${job?.sname} 
+${job?.cname}`}
+      </div>
+    );
+  };
+
   return (
     <>
-      <Row style={{ display: 'block', marginBottom: 5, textAlign: 'right' }}>
-        {/* <Col span={12}>
-          <Input.Search
-            placeholder="Search by name"
-            onSearch={handleSearch}
-            enterButton
-            style={{ width: '100%' }}
-          />
-        </Col> */}
-        {/* <Col>
-          <Button color="primary" variant="text" size="large" onClick={() => showModal(null)}>
-            <FileAddOutlined style={{ fontSize: '20px' }}></FileAddOutlined>
+      <Row justify="end" style={{ marginBottom: 16 }}>
+        <Space>
+          <Button type="primary" onClick={() => downloadInvoicePDF({
+  invoiceNumber: '2754',
+  invoiceDate: '02/07/2025',
+  orderNumber: '2754',
+  orderDate: '02/07/2025',
+  paymentMethod: 'Visa credit card',
+  customer: {
+    name: 'Nha Phan',
+    address: '2663 Pineland Avenue, Doraville, GA 30340',
+    email: 'phanthanhnha123200@gmail.com',
+    phone: '23132345324'
+  },
+  products: [
+    { name: 'FRC - 01', quantity: 1, price: 15.00 },
+    { name: 'eBUSINESS CARD-03 - 1', quantity: 1, price: 35.00 },
+    { name: 'eBUSINESS CARD-03 - 2', quantity: 1, price: 56.00 },
+    { name: 'eBUSINESS CARD-03 - 4', quantity: 1, price: 98.00 },
+    { name: 'eBUSINESS CARD-03 - 10', quantity: 1, price: 175.00 },
+    // … thêm đủ các dòng eBUSINESS CARD-02 - 10 như file gốc
+  ],
+  shipProducts: [
+    { name: 'eBUSINESS CARD-02 - 10', quantity: 1, price: 175.00 }
+  ],
+  subtotal: 2479.00,
+  shipping: 'Free',
+  total: 2479.00
+})}>
+            Download Invoice
           </Button>
-        </Col> */}
+          <Button type={viewMode === "table" ? "primary" : "default"} onClick={() => setViewMode("table")}>
+            Table View
+          </Button>
+          <Button type={viewMode === "calendar" ? "primary" : "default"} onClick={() => setViewMode("calendar")}>
+            Calendar View
+          </Button>
+        </Space>
       </Row>
-      <Table
-        columns={columns}
-        dataSource={data}
-        pagination={{ pageSize: 5 }}
-        locale={{ emptyText: 'No jobs found' }}
-        scroll={{
-          x: '100%',
-        }}
-        tableLayout="auto"
-      />
+
+      {viewMode === "table" && (
+        <Table
+          columns={columns}
+          dataSource={data}
+          pagination={{ pageSize: 5 }}
+          scroll={{ x: "100%" }}
+          locale={{ emptyText: "No jobs found" }}
+          tableLayout="auto"
+        />
+      )}
+
+      {viewMode === "calendar" && (
+        <Card>
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            headerToolbar={{
+              start: "today prev,next",
+              center: "title",  
+              end: ""
+            }}
+            eventContent={renderEventContent} 
+            events={events}
+            eventClick={(info) => {
+              const job = data.find((j) => j.id == info.event.id);
+              if (job) {
+                showModal(job);
+                //setShowModal(true);
+              }
+            }}
+            height={600}
+          />
+        </Card>
+      )}
       <DynamicFormModal
         title={serviceName}
         visible={isViewModalVisible}

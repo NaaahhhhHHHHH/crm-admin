@@ -215,6 +215,16 @@ const OwnerTable = () => {
 
   const columns = [
     {
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 80,
+      align: 'center',
+      ...getColumnSearchProps('id'),
+      sorter: (a, b) => a.id - b.id,
+      fixed: 'left',
+    },
+    {
       title: 'Name',
       dataIndex: 'name',
       className: 'custom-width',

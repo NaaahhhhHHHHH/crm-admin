@@ -8,6 +8,7 @@ const ChangePassword = React.lazy(() => import('./views/pages/People/ChangePassw
 
 const Form = React.lazy(() => import('./views/pages/Service/Form'))
 const Service = React.lazy(() => import('./views/pages/Service/Service'))
+const History = React.lazy(() => import('./views/pages/Service/History'))
 
 const Job = React.lazy(() => import('./views/pages/Job/Job'))
 const Ticket = React.lazy(() => import('./views/pages/Job/Ticket'))
@@ -25,6 +26,7 @@ const routes = [
   { path: '/People/ChangePassword', name: 'ChangePassword', element: ChangePassword },
   { path: '/Service/Service', name: 'Service', element: Service },
   { path: '/Service/Form', name: 'Form', element: Form },
+  { path: '/Service/History', name: 'History', element: History },
   { path: '/Job/Job', name: 'Job', element: Job },
   { path: '/Job/Assign', name: 'Assign', element: Assign },
   { path: '/Job/Ticket', name: 'Ticket', element: Ticket },
