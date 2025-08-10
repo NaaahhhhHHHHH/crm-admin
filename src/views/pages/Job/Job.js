@@ -32,6 +32,7 @@ import {
   FileAddOutlined,
   UserAddOutlined,
   DownOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons'
 import '../index.css'
 import { updateData, createData, deleteData, getData } from '../../../api'
@@ -60,6 +61,8 @@ const BASE_URL = `${apiUrl}/api`
 
 const ServiceTable = () => {
   const [data, setData] = useState([])
+  const [selfData, setSelfData] = useState(null)
+  const [currentData, setCurrentData] = useState([])
   const [customerData, setCustomerData] = useState([])
   const [employeeData, setEmployeeData] = useState([])
   const [serviceData, setServiceData] = useState([])
@@ -68,14 +71,17 @@ const ServiceTable = () => {
   const [maxBudget, setMaxBudget] = useState(0)
   const [formDataAssign, setformDataAssign] = useState(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
+  const [isModalExportVisible, setIsModalExportVisible] = useState(false)
   const [serviceName, setServiceName] = useState('')
   const [isViewModalVisible, setIsViewModalVisible] = useState(false)
   const [isAssignModalVisible, setIsAssignModalVisible] = useState(false)
+  const [expandedRowKeys, setExpandedRowKeys] = useState([]);
   const [isAssignListModalVisible, setIsAssignListModalVisible] = useState(false)
   // const [currentService, setCurrentService] = useState(null)
   const [currentForm, setCurrentForm] = useState(null)
   const [currentJob, setCurrentJob] = useState(null)
   const [form] = Form.useForm()
+  const [formExport] = Form.useForm()
   const [assignList, setAssignList] = useState(null)
   const [formAssign] = Form.useForm()
   const [currentStep, setCurrentStep] = useState(0)
@@ -345,13 +351,14 @@ const ServiceTable = () => {
 
   const loadJobs = async () => {
     try {
-      const [response0, response1, response2, response3, response4, response5] = await Promise.all([
+      const [response0, response1, response2, response3, response4, response5, response6] = await Promise.all([
         getData('job'),
         getData('service'),
         getData('form'),
         getData('customer'),
         getData('employee'),
         getData('assignment'),
+        getData(`${role}/${userId}`)
       ])
 
       let jobList = response0.data
@@ -360,6 +367,7 @@ const ServiceTable = () => {
       let customerList = response3.data
       let employeeList = response4.data
       let assignmentList = response5.data
+      let personInfo = response6.data
       jobList.forEach((j) => {
         j.cname = customerList.find((c) => j.cid == c.id).name
         j.sname = serviceList.find((s) => j.sid == s.id).name
@@ -374,8 +382,10 @@ const ServiceTable = () => {
         }
       })
       setData(jobList)
+      setSelfData(personInfo)
+      setCurrentData(jobList)
       let serviceOption = serviceList.map((r) => ({ label: r.name, value: r.id, data: r.formData }))
-      let customerOption = customerList.map((r) => ({ label: r.name, value: r.id }))
+      let customerOption = customerList.map((r) => ({ ...r, label: r.name, value: r.id }))
       let employeeOption = employeeList.map((r) => ({ label: r.name, value: r.id }))
       setServiceData(serviceOption)
       setCustomerData(customerOption)
@@ -398,23 +408,15 @@ const ServiceTable = () => {
   const showModal = (CJob) => {
     setCurrentJob(CJob)
     form.setFieldsValue(CJob)
-    // if (CJob) {
-    //   setFormDataArray(CJob.data)
-    // }
-    // if (service) {
-    //   setFormDataArray(
-    //     service.formData || [
-    //       {
-    //         type: 'input',
-    //         label: '',
-    //         required: false,
-    //         fieldname: `field_1`,
-    //       },
-    //     ],
-    //   ) // Load existing formData
-    // }
     setIsModalVisible(true)
     setCurrentStep(0)
+  }
+
+  const showModalExport = (CJob) => {
+    if (CJob) {
+      setCurrentJob(CJob)
+    }
+    setIsModalExportVisible(true)
   }
 
   const handleDelete = async (id) => {
@@ -439,6 +441,7 @@ const ServiceTable = () => {
       let formData = { ...currentJob }
       formData.status = formValue.status ? formValue.status : formData.status
       formData.budget = formValue.budget ? formValue.budget : formData.budget
+      formData.note = formValue.note ? formValue.note : formData.note
       let res = currentJob
         ? await updateData('job', currentJob.id, formData)
         : await createData('job', formData)
@@ -450,10 +453,23 @@ const ServiceTable = () => {
     }
   }
 
+  const handleExport = () => {
+    let formValue = formExport.getFieldsValue()
+    //console.log(formValue);
+    downloadInvoicePDF(currentJob ? currentJob.id : null, formValue)
+    handleCloseModalExport();
+  }
+
   const handleCloseModal = () => {
     setIsModalVisible(false)
     setCurrentJob(null)
     form.resetFields()
+  }
+
+  const handleCloseModalExport = () => {
+    setIsModalExportVisible(false)
+    setCurrentJob(null)
+    formExport.resetFields()
   }
 
   const columns = [
@@ -524,17 +540,6 @@ const ServiceTable = () => {
         text: <Tag color={r.color}>{r.value}</Tag>,
         value: r.value,
       })),
-
-      // [
-      //   {
-      //     text: <Tag style={{ color: 'yellow' }}>Pending</Text>,
-      //     value: 'Pending',
-      //   },
-      //   {
-      //     text: <Tag style={{ color: 'blue' }}>Running</Text>,
-      //     value: 'Running',
-      //   },
-      // ],
       onFilter: (value, record) => record.status === value,
       // sorter: (a, b) => a.sname.localeCompare(b.sname),
       // ellipsis: true,
@@ -549,14 +554,6 @@ const ServiceTable = () => {
       defaultSortOrder: 'descend',
       // ellipsis: true,
     },
-    // {
-    //   title: 'Description',
-    //   ...getColumnSearchProps('description'),
-    //   width: 400,
-    //   dataIndex: 'description',
-    //   key: 'description',
-    //   ellipsis: true,
-    // },
     {
       title: 'Action',
       key: 'action',
@@ -569,7 +566,6 @@ const ServiceTable = () => {
             size="large"
             variant="text"
             onClick={() => showViewModal(record)}
-            style={{ marginLeft: 5 }}
           >
             <FolderViewOutlined style={{ fontSize: '20px' }} />
           </Button>
@@ -594,7 +590,6 @@ const ServiceTable = () => {
               size="large"
               variant="text"
               onClick={() => showAssignModal(record)}
-              style={{ marginLeft: 5 }}
             >
               <UserAddOutlined style={{ fontSize: '20px' }} />
             </Button>
@@ -613,12 +608,19 @@ const ServiceTable = () => {
                 color="danger"
                 variant="text"
                 // onClick={() => handleDelete(record.id)}
-                style={{ marginLeft: 5 }}
               >
                 <DeleteOutlined style={{ fontSize: '20px' }} />
               </Button>
             </Popconfirm>
           )}
+          <Button
+              color="primary"
+              size="large"
+              variant="text"
+              onClick={() => showModalExport(record)}
+              disabled={viewMode === "table" ? false : true}>
+            <DownloadOutlined style={{ fontSize: '20px' }} />
+          </Button>
         </>
       ),
     },
@@ -645,6 +647,7 @@ const ServiceTable = () => {
 function chunkArray(items, size) {
   const chunks = [];
   for (let i = 0; i < items.length; i += size) {
+    if (i) size += 10;
     chunks.push(items.slice(i, i + size));
   }
   return chunks;
@@ -658,7 +661,57 @@ const PageWithBackground = ({ bgDataURL, styles, children }) => (
   </Page>
 );
 
-const downloadInvoicePDF = async (invoiceData) => {
+const downloadInvoicePDF = async (jid, formValue) => {
+  let invoiceData = {
+    invoiceNumber: 0,
+    invoiceDate: '',
+    orderNumber: 0,
+    orderDate: '',
+    paymentMethod: formValue.paymentMethod,
+    user: {
+      name: selfData.name,
+      address: selfData.address,
+      email: selfData.email,
+      phone: selfData.phone
+    },
+    customer: {
+      name: formValue.name,
+      address: formValue.address,
+      cityStateZip: formValue.zip,
+      email: formValue.email,
+      phone: formValue.phone
+    },
+    products: [],
+    subtotal: 0,
+    shipping: 0,
+    total: 0,
+  }
+  let dataExport = jid ? data.filter(r => r.id == jid) : currentData;
+  if (!dataExport.length) return;
+  dataExport.forEach(r => {
+    invoiceData.orderNumber = Math.max(invoiceData.orderNumber, r.id)
+    invoiceData.invoiceNumber = Math.max(invoiceData.orderNumber, r.id)
+    let jobM = data.find(r => r.id == invoiceData.orderNumber)
+    invoiceData.invoiceDate = dayjs(jobM.createdAt).format("DD/MM/YYYY")
+    invoiceData.orderDate = dayjs(jobM.createdAt).format("DD/MM/YYYY")
+    let invoiceS = invoiceData.products.findIndex(j => j.sid == r.sid);
+    if (invoiceS >= 0) {
+      invoiceData.products[invoiceS].quantity++;
+      invoiceData.products[invoiceS].price += r.budget;
+    } else {
+      invoiceData.products.push({
+        name: r.sname,
+        quantity: 1,
+        sid: r.sid,
+        price: r.budget,
+      })
+    }
+  })
+  invoiceData.products.forEach(p => {
+    invoiceData.subtotal += p.price;
+  })
+  invoiceData.total = invoiceData.subtotal + invoiceData.shipping;
+
   // Convert a Blob to a Data URL
   const toDataURL = blob =>
     new Promise(resolve => {
@@ -696,8 +749,8 @@ const downloadInvoicePDF = async (invoiceData) => {
       position: 'absolute',
       top: 0,
       left: 0,
-      width: '100%',
-      height: '108%',
+      width: 595,
+      height: 842,
       zIndex: -1,
     },
     infoRow: {
@@ -705,13 +758,15 @@ const downloadInvoicePDF = async (invoiceData) => {
       justifyContent: 'space-between',
       marginBottom: 20
     },
-    logo: { height: 30, marginBottom: 12 },
-    companyBlock: { marginBottom: 20 },
+    logo: { height: 30, marginBottom: 12, position: 'absolute', zIndex: 0, top: 0,left: 0,},
+    logoBlock: { flex: 8.5},
+    companyBlock: { flex: 3, marginBottom: 20 },
     invoiceTitle: {
       fontSize: 18,
-      textAlign: 'center',
+      textAlign: 'left',
       marginBottom: 20,
       textTransform: 'uppercase',
+      fontWeight: 'bold'
     },
     section: { marginBottom: 12 },
     tableHeader: {
@@ -719,8 +774,11 @@ const downloadInvoicePDF = async (invoiceData) => {
       borderBottomWidth: 1,
       borderBottomColor: '#444',
       paddingBottom: 4,
+      paddingTop: 4,
       marginBottom: 4,
       alignItems: 'center',
+      color: "white",
+      backgroundColor: "black",
     },
     tableRow: {
       flexDirection: 'row',
@@ -729,26 +787,38 @@ const downloadInvoicePDF = async (invoiceData) => {
       paddingVertical: 3,
       alignItems: 'center',
     },
-    colProduct: { flex: 4, textAlign: 'left' },
-    colQty: { flex: 1, textAlign: 'center' },
-    colPrice: { flex: 1, textAlign: 'right' },
+    colProduct: { flex: 4, textAlign: 'left', paddingRight: "5px" },
+    colQty: { flex: 1, textAlign: 'left' },
+    colPrice: { flex: 1, textAlign: 'left' },
     totalsContainer: {
-      marginTop: 20,
       flexDirection: 'column',
-      alignItems: 'flex-end',
+      width: '100%',
     },
     totalLine: {
       flexDirection: 'row',
-      width: '40%',
-      justifyContent: 'space-between',
       paddingVertical: 2,
     },
-    totalLabel: { textAlign: 'left' },
-    totalValue: { textAlign: 'right' },
+    totalEmpty: {
+      flex: 4,
+      textAlign: 'left',
+    },
+    totalLabel: {
+      flex: 1,
+      textAlign: 'left',
+      borderBottomWidth: 1,
+      borderBottomColor: 'black',
+      fontWeight: "bold"
+    },
+    totalValue: {
+      flex: 1, 
+      textAlign: 'left',
+      borderBottomWidth: 1,
+      borderBottomColor: 'black',
+    },
   });
 
-  // 3. Paginate products: assume ~12 rows per page
-  const productPages = chunkArray(invoiceData.products, 12);
+  // 3. Paginate products: assume 25~35 rows per page
+  const productPages = chunkArray(invoiceData.products, 25);
 
   // 4. Build the PDF document
   const InvoiceDoc = (
@@ -763,9 +833,11 @@ const downloadInvoicePDF = async (invoiceData) => {
           {pageIndex === 0 && (
             <>
               <View style={styles.infoRow}>
-                <Image src={logoDataURL} style={styles.logo} fixed/>
+                <View style={styles.logoBlock}>
+                  <Image src={logoDataURL} style={styles.logo} fixed/>
+                </View>
                 <View style={styles.companyBlock}>
-                  <Text>Allinclicks</Text>
+                  <Text style={{fontWeight: "bold"}}>Allinclicks</Text>
                   <Text>800 Walnut Creek Dr NW</Text>
                   <Text>Lilburn, GA 30047</Text>
                   <Text>United States (US)</Text>
@@ -783,7 +855,7 @@ const downloadInvoicePDF = async (invoiceData) => {
                 </View>
 
                 <View style={styles.section}>
-                  <Text>Ship to:</Text>
+                  <Text style={{fontWeight: "bold"}}>Ship to:</Text>
                   <Text>{invoiceData.customer.name}</Text>
                   <Text>{invoiceData.customer.address}</Text>
                   <Text>{invoiceData.customer.cityStateZip}</Text>
@@ -804,13 +876,13 @@ const downloadInvoicePDF = async (invoiceData) => {
           {/* PRODUCT TABLE */}
           <View style={styles.section}>
             <View style={styles.tableHeader}>
-              <Text style={styles.colProduct}>Product</Text>
-              <Text style={styles.colQty}>Quantity</Text>
-              <Text style={styles.colPrice}>Price</Text>
+              <Text style={{...styles.colProduct, fontWeight: 'bold'}}> Product</Text>
+              <Text style={{...styles.colQty, fontWeight: 'bold'}}>Quantity</Text>
+              <Text style={{...styles.colPrice, fontWeight: 'bold'}}>Price</Text>
             </View>
             {prodChunk.map((item, i) => (
               <View key={i} style={styles.tableRow}>
-                <Text style={styles.colProduct}>{item.name}</Text>
+                <Text style={styles.colProduct}> {item.name}</Text>
                 <Text style={styles.colQty}>{item.quantity}</Text>
                 <Text style={styles.colPrice}>
                   ${item.price.toFixed(2)}
@@ -822,31 +894,23 @@ const downloadInvoicePDF = async (invoiceData) => {
           {/* LAST PAGE: Email/Phone + Ship To + Totals */}
           {pageIndex === productPages.length - 1 && (
             <>
-              <View style={styles.section}>
-                <View style={styles.tableHeader}>
-                  <Text style={styles.colProduct}>Product</Text>
-                  <Text style={styles.colQty}>Quantity</Text>
-                  <Text style={styles.colPrice}>Price</Text>
-                </View>
-                {invoiceData.shipProducts.map((sp, j) => (
-                  <View key={j} style={styles.tableRow}>
-                    <Text style={styles.colProduct}>{sp.name}</Text>
-                    <Text style={styles.colQty}>{sp.quantity}</Text>
-                    <Text style={styles.colPrice}>
-                      ${sp.price.toFixed(2)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-
               <View style={styles.totalsContainer}>
                 <View style={styles.totalLine}>
+                  <Text style={styles.totalEmpty}></Text>
                   <Text style={styles.totalLabel}>Subtotal</Text>
                   <Text style={styles.totalValue}>
                     ${invoiceData.subtotal.toFixed(2)}
                   </Text>
                 </View>
                 <View style={styles.totalLine}>
+                  <Text style={styles.totalEmpty}></Text>
+                  <Text style={styles.totalLabel}>Shipping</Text>
+                  <Text style={styles.totalValue}>
+                    ${invoiceData.shipping.toFixed(2)}
+                  </Text>
+                </View>
+                <View style={styles.totalLine}>
+                  <Text style={styles.totalEmpty}></Text>
                   <Text style={styles.totalLabel}>Total</Text>
                   <Text style={styles.totalValue}>
                     ${invoiceData.total.toFixed(2)}
@@ -900,34 +964,9 @@ ${job?.cname}`}
     <>
       <Row justify="end" style={{ marginBottom: 16 }}>
         <Space>
-          <Button type="primary" onClick={() => downloadInvoicePDF({
-  invoiceNumber: '2754',
-  invoiceDate: '02/07/2025',
-  orderNumber: '2754',
-  orderDate: '02/07/2025',
-  paymentMethod: 'Visa credit card',
-  customer: {
-    name: 'Nha Phan',
-    address: '2663 Pineland Avenue, Doraville, GA 30340',
-    email: 'phanthanhnha123200@gmail.com',
-    phone: '23132345324'
-  },
-  products: [
-    { name: 'FRC - 01', quantity: 1, price: 15.00 },
-    { name: 'eBUSINESS CARD-03 - 1', quantity: 1, price: 35.00 },
-    { name: 'eBUSINESS CARD-03 - 2', quantity: 1, price: 56.00 },
-    { name: 'eBUSINESS CARD-03 - 4', quantity: 1, price: 98.00 },
-    { name: 'eBUSINESS CARD-03 - 10', quantity: 1, price: 175.00 },
-    // … thêm đủ các dòng eBUSINESS CARD-02 - 10 như file gốc
-  ],
-  shipProducts: [
-    { name: 'eBUSINESS CARD-02 - 10', quantity: 1, price: 175.00 }
-  ],
-  subtotal: 2479.00,
-  shipping: 'Free',
-  total: 2479.00
-})}>
-            Download Invoice
+          <Button onClick={() => showModalExport()}
+              variant="text" disabled={viewMode === "table" ? false : true}>
+            <DownloadOutlined style={{ fontSize: '20px' }} />
           </Button>
           <Button type={viewMode === "table" ? "primary" : "default"} onClick={() => setViewMode("table")}>
             Table View
@@ -940,12 +979,36 @@ ${job?.cname}`}
 
       {viewMode === "table" && (
         <Table
+          rowKey="id"
           columns={columns}
           dataSource={data}
           pagination={{ pageSize: 5 }}
           scroll={{ x: "100%" }}
           locale={{ emptyText: "No jobs found" }}
           tableLayout="auto"
+          onChange={(pagination, filters, sorter, extra) => {
+            setCurrentData(extra.currentDataSource);
+          }}
+          expandable={{
+            expandedRowRender: (record) => {
+              return (
+                <>
+                  <div style={{ gap: 15, display: 'flex' }}>
+                    {record.note}
+                  </div>
+                </>
+                )
+            },
+            expandedRowKeys: expandedRowKeys,
+            onExpand: (expanded, record) => {
+              if (expanded) {
+                setExpandedRowKeys([record.id])
+              } else {
+                setExpandedRowKeys([])
+              }
+            },
+            rowExpandable: (record) => record.note,
+          }}
         />
       )}
 
@@ -955,7 +1018,7 @@ ${job?.cname}`}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             headerToolbar={{
-              start: "today prev,next",
+              start: "today prevYear,prev,next,nextYear",
               center: "title",  
               end: ""
             }}
@@ -1030,13 +1093,6 @@ ${job?.cname}`}
             label="Budget"
             rules={[{ required: true, message: 'Please input budget' }]}
           >
-            {/* <Select
-                  showSearch
-                  placeholder="Select Customer"
-                  optionFilterProp="label"
-                  // onChange={}
-                  options={customerData}
-                /> */}
             <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item
@@ -1053,9 +1109,100 @@ ${job?.cname}`}
               options={statusList}
             />
           </Form.Item>
+          <Form.Item
+            name="note"
+            label="Note"
+          >
+            <TextArea style={{ width: '100%' }} />
+          </Form.Item>
           <div style={{ textAlign: 'center', marginTop: 20 }}>
             <Button type="primary" htmlType="submit">
               {currentJob ? 'Update' : 'Add'}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+      <Modal
+        title={"Invoice info"}
+        open={isModalExportVisible}
+        style={{ top: 120, overflowY: 'auto', overflowX: 'hidden' }}
+        width={700}
+        onCancel={handleCloseModalExport}
+        footer={null}
+      >
+        <Form
+          form={formExport}
+          layout="vertical"
+          onFinish={handleExport}
+          style={{
+            marginTop: 20,
+            maxWidth: 'none',
+          }}
+          scrollToFirstError={{ behavior: 'smooth', block: 'center' }}
+        >
+          <Form.Item
+            name="name"
+            label="Name"
+            rules={[{ required: true, message: 'Please input name!' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[
+              { required: true, message: 'Please input email!' },
+              { type: 'email', message: 'Please input valid email!' },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="zip"
+            label="City, State and Zip code"
+            rules={[{ required: true, message: 'Please input City, State and Zip code!' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="address"
+            label="Address"
+            rules={[{ required: true, message: 'Please input address!' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="phone"
+            label="Phone numer"
+            rules={[
+              { required: true, message: 'Please input mobile!' },
+              {
+                pattern: /^(\+1\s?)?(\(?\d{3}\)?[\s.-]?)?\d{3}[\s.-]?\d{4}$/,
+                message: 'Please enter a valid US phone number!',
+              },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="paymentMethod"
+            label="Payment Method"
+            rules={[{ required: true, message: 'Please choose Payment Method' }]}
+          >
+            <Select
+              showSearch
+              placeholder="Select Payment Method"
+              optionFilterProp="label"
+              options={[
+                {value: "Mastercard credit card", label: "Mastercard credit card"}, 
+                {value: "Visa credit card", label: "Visa credit card"},
+                {value: "Cash", label: "Cash"}
+              ]}
+            />
+          </Form.Item>
+          <div style={{ textAlign: 'center', marginTop: 20 }}>
+            <Button type="primary" htmlType="submit">
+              {'OK'}
             </Button>
           </div>
         </Form>

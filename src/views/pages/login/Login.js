@@ -17,12 +17,16 @@ import {
   CInputGroupText,
   CRow,
   CFormCheck,
+  CImage,
 } from '@coreui/react'
 import { Input } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import CIcon from '@coreui/icons-react'
 import { cilLockLocked, cilUser } from '@coreui/icons'
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons'
+const apiUrl =
+  import.meta.env.MODE == 'product' ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_LOCAL
+const BASE_URL = `${apiUrl}/api`
 
 const Login = () => {
   const navigate = useNavigate()
@@ -41,6 +45,39 @@ const Login = () => {
   const handleRoleChange = (e) => {
     setRole(e.target.value)
   }
+
+  const loginWithGoogle = () => {
+    const popup = window.open(
+      `${BASE_URL}/auth/google`,
+      'google-login',
+      'width=500,height=600'
+    );
+  
+    const handleMessage = (event) => {
+      if (event.origin !== apiUrl) return;
+  
+      const { token, user, error } = event.data;
+  
+      window.removeEventListener('message', handleMessage);
+  
+      if (error) {
+        toast.error(error);
+        return;
+      }
+  
+      if (token && user && user.role !== 'customer') {
+        localStorage.setItem('CRM-token', token);
+        toast.success('Login successful');
+        dispatch({ type: 'set', user });
+        navigate('/');
+      } else {
+        toast.error('Login failed');
+      }
+    };
+  
+    window.addEventListener('message', handleMessage);
+  };
+  
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -65,6 +102,10 @@ const Login = () => {
     }
   }
   return (
+    <>
+    <div style={{position: "absolute"}}>
+      <CImage src={BASE_URL + '/downloadLogo'} alt="Logo" height={50}></CImage>
+    </div>
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
       <CContainer>
         <CRow className="justify-content-center">
@@ -128,6 +169,23 @@ const Login = () => {
                         </CButton>
                       </CCol> */}
                     </CRow>
+                    <CRow className="mt-3">
+                      <CCol xs={12}>
+                        <CButton
+                          color="light"
+                          className="w-100 d-flex align-items-center justify-content-center"
+                          onClick={loginWithGoogle}
+                          style={{ border: '1px solid #ddd' }}
+                        >
+                          <img
+                            src="https://toppng.com/uploads/preview/google-logo-transparent-png-11659866441wanynck5pd.png"
+                            alt="Google logo"
+                            style={{ width: '20px', height: '20px', marginRight: '10px' }}
+                          />
+                          Sign in with Google
+                        </CButton>
+                      </CCol>
+                    </CRow>
                   </CForm>
                 </CCardBody>
               </CCard>
@@ -136,6 +194,7 @@ const Login = () => {
         </CRow>
       </CContainer>
     </div>
+    </>
   )
 }
 
