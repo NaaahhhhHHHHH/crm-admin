@@ -13,6 +13,9 @@ import {
   Radio,
   Popconfirm,
 } from 'antd'
+import PhoneInput from 'react-phone-input-2'
+import 'react-phone-input-2/lib/style.css'
+import { parsePhoneNumberFromString } from 'libphonenumber-js'
 import { useNavigate } from 'react-router-dom'
 import { updateData, createData, deleteData, getData } from '../../../api'
 import '../index.css'
@@ -434,29 +437,62 @@ const CustomerTable = () => {
             <Input />
           </Form.Item>
           <Form.Item
-            name="mobile"
-            label="Mobile"
-            rules={[
-              { required: true, message: 'Please input mobile!' },
-              {
-                pattern: /^(\+1\s?)?(\(?\d{3}\)?[\s.-]?)?\d{3}[\s.-]?\d{4}$/,
-                message: 'Please enter a valid US phone number!',
+          label="Mobile"
+          name="mobile"
+          rules={[
+            { required: true, message: 'Please input your phone number!' },
+            {
+              validator: (_, value) => {
+                try {
+                  const phoneNumber = parsePhoneNumberFromString('+' + value)
+                  if (!phoneNumber || !phoneNumber.isValid()) {
+                    return Promise.reject(new Error('Invalid phone number'))
+                  }
+                  return Promise.resolve()
+                } catch {
+                  return Promise.reject(new Error('Invalid phone number'))
+                }
               },
-            ]}
-          >
-            <Input />
+            },
+          ]}
+        >
+          <PhoneInput
+            value={form.getFieldValue('mobile')}
+            enableSearch
+            inputStyle={{ width: '100%' }}
+            onChange={(phone) => {
+              form.setFieldsValue({ mobile: phone });
+            }}
+          />
           </Form.Item>
           <Form.Item
             name="work"
             label="Work Mobile"
             rules={[
+              { required: true, message: 'Please input your phone number!' },
               {
-                pattern: /^(\(?\d{3}\)?[\s.-]?)?\d{3}[\s.-]?\d{4}$/,
-                message: 'Please enter a valid work phone number!',
+                validator: (_, value) => {
+                  try {
+                    const phoneNumber = parsePhoneNumberFromString('+' + value)
+                    if (!phoneNumber || !phoneNumber.isValid()) {
+                      return Promise.reject(new Error('Invalid phone number'))
+                    }
+                    return Promise.resolve()
+                  } catch {
+                    return Promise.reject(new Error('Invalid phone number'))
+                  }
+                },
               },
             ]}
           >
-            <Input />
+            <PhoneInput
+              value={form.getFieldValue('work')}
+              enableSearch
+              inputStyle={{ width: '100%' }}
+              onChange={(phone) => {
+                form.setFieldsValue({ work: phone });
+              }}
+            />
           </Form.Item>
           <Form.Item
             name="password"
