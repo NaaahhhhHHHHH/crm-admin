@@ -8,6 +8,7 @@ const ChangePassword = React.lazy(() => import('./views/pages/People/ChangePassw
 
 const Form = React.lazy(() => import('./views/pages/Service/Form'))
 const Service = React.lazy(() => import('./views/pages/Service/Service'))
+const Oauth = React.lazy(() => import('./views/pages/login/Oauth'))
 const History = React.lazy(() => import('./views/pages/Service/History'))
 
 const Job = React.lazy(() => import('./views/pages/Job/Job'))
@@ -30,6 +31,7 @@ const routes = [
   { path: '/Job/Job', name: 'Job', element: Job },
   { path: '/Job/Assign', name: 'Assign', element: Assign },
   { path: '/Job/Ticket', name: 'Ticket', element: Ticket },
+  { path: '/login/Oauth', name: 'Oauth', element: Oauth },
 ]
 
 export default routes

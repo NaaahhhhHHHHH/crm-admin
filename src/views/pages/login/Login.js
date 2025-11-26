@@ -34,11 +34,11 @@ const Login = () => {
   // State for form inputs
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false)
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+    setShowPassword(!showPassword)
+  }
   // const [errorMessage, setErrorMessage] = useState(null)
 
   // Handle role change
@@ -47,37 +47,32 @@ const Login = () => {
   }
 
   const loginWithGoogle = () => {
-    const popup = window.open(
-      `${BASE_URL}/auth/google`,
-      'google-login',
-      'width=500,height=600'
-    );
-  
+    const popup = window.open(`${BASE_URL}/auth/google`, 'google-login', 'width=500,height=600')
+
     const handleMessage = (event) => {
-      if (event.origin !== apiUrl) return;
-  
-      const { token, user, error } = event.data;
-  
-      window.removeEventListener('message', handleMessage);
-  
+      if (event.origin !== apiUrl) return
+
+      const { token, user, error } = event.data
+
+      window.removeEventListener('message', handleMessage)
+
       if (error) {
-        toast.error(error);
-        return;
+        toast.error(error)
+        return
       }
-  
+
       if (token && user && user.role !== 'customer') {
-        localStorage.setItem('CRM-token', token);
-        toast.success('Login successful');
-        dispatch({ type: 'set', user });
-        navigate('/');
+        localStorage.setItem('CRM-token', token)
+        toast.success('Login successful')
+        dispatch({ type: 'set', user })
+        navigate('/')
       } else {
-        toast.error('Login failed');
+        toast.error('Login failed')
       }
-    };
-  
-    window.addEventListener('message', handleMessage);
-  };
-  
+    }
+
+    window.addEventListener('message', handleMessage)
+  }
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -103,60 +98,60 @@ const Login = () => {
   }
   return (
     <>
-    <div style={{position: "absolute"}}>
-      <CImage src={BASE_URL + '/downloadLogo'} alt="Logo" height={50}></CImage>
-    </div>
-    <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
-      <CContainer>
-        <CRow className="justify-content-center">
-          <CCol md={5}>
-            <CCardGroup>
-              <CCard className="p-4">
-                <CCardBody>
-                  <CForm onSubmit={handleSubmit}>
-                    <h1>Login</h1>
-                    <p className="text-body-secondary">Sign In to your account</p>
-                    <CInputGroup className="mb-3">
-                      <CInputGroupText>
-                        <CIcon icon={cilUser} />
-                      </CInputGroupText>
-                      <CFormInput
-                        placeholder="Username"
-                        autoComplete="username"
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                      />
-                    </CInputGroup>
-                    <CInputGroup className="mb-4">
-                      <CInputGroupText>
-                        <CIcon icon={cilLockLocked} />
-                      </CInputGroupText>
-                      <CFormInput
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Password"
-                        autoComplete="current-password"
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                      <CButton
-                        type="button"
-                        onClick={togglePasswordVisibility}
-                        // color="white"
-                        style={{
-                          backgroundColor: "white",
-                        }}
-                        class="input-group-text"
-                      >
-                        {showPassword ? <EyeInvisibleOutlined/> : <EyeOutlined/>}
-                      </CButton>
-                    </CInputGroup>
-                    <CRow>
-                      <CCol xs={4}>
-                        <CButton color="primary" className="px-4" type="submit">
-                          Login
+      <div style={{ position: 'absolute' }}>
+        <CImage src={BASE_URL + '/downloadLogo'} alt="Logo" height={50}></CImage>
+      </div>
+      <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
+        <CContainer>
+          <CRow className="justify-content-center">
+            <CCol md={5}>
+              <CCardGroup>
+                <CCard className="p-4">
+                  <CCardBody>
+                    <CForm onSubmit={handleSubmit}>
+                      <h1>Login</h1>
+                      <p className="text-body-secondary">Sign In to your account</p>
+                      <CInputGroup className="mb-3">
+                        <CInputGroupText>
+                          <CIcon icon={cilUser} />
+                        </CInputGroupText>
+                        <CFormInput
+                          placeholder="Username"
+                          autoComplete="username"
+                          onChange={(e) => setUsername(e.target.value)}
+                          required
+                        />
+                      </CInputGroup>
+                      <CInputGroup className="mb-4">
+                        <CInputGroupText>
+                          <CIcon icon={cilLockLocked} />
+                        </CInputGroupText>
+                        <CFormInput
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Password"
+                          autoComplete="current-password"
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                        />
+                        <CButton
+                          type="button"
+                          onClick={togglePasswordVisibility}
+                          // color="white"
+                          style={{
+                            backgroundColor: 'white',
+                          }}
+                          class="input-group-text"
+                        >
+                          {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
                         </CButton>
-                      </CCol>
-                      {/* <CCol xs={7}>
+                      </CInputGroup>
+                      <CRow>
+                        <CCol xs={4}>
+                          <CButton color="primary" className="px-4" type="submit">
+                            Login
+                          </CButton>
+                        </CCol>
+                        {/* <CCol xs={7}>
                         <Link to="/register">
                           <CButton color="primary" className="px-4" tabIndex={-1}>
                             Register as customer
@@ -168,8 +163,8 @@ const Login = () => {
                           Forgot password?
                         </CButton>
                       </CCol> */}
-                    </CRow>
-                    <CRow className="mt-3">
+                      </CRow>
+                      {/*<CRow className="mt-3">
                       <CCol xs={12}>
                         <CButton
                           color="light"
@@ -186,14 +181,15 @@ const Login = () => {
                         </CButton>
                       </CCol>
                     </CRow>
-                  </CForm>
-                </CCardBody>
-              </CCard>
-            </CCardGroup>
-          </CCol>
-        </CRow>
-      </CContainer>
-    </div>
+                    */}
+                    </CForm>
+                  </CCardBody>
+                </CCard>
+              </CCardGroup>
+            </CCol>
+          </CRow>
+        </CContainer>
+      </div>
     </>
   )
 }

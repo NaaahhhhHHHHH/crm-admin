@@ -15,6 +15,7 @@ import {
   cilUser,
   cilPeople,
   cilControl,
+  cilSettings,
 } from '@coreui/icons'
 import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 const apiUrl =
@@ -92,6 +93,13 @@ const _nav = [
     name: 'Docs',
     href: `${apiUrl}/api-docs/`,
     icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
+  },
+
+  {
+    component: CNavItem,
+    icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
+    name: 'Oauth Client',
+    to: '/login/Oauth',
   },
 
   {
