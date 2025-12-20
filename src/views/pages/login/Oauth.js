@@ -345,9 +345,6 @@ const OAuthClientTable = () => {
                             options={[
                                 { value: "authorization_code" },
                                 { value: "refresh_token" },
-                                { value: "client_credentials" },
-                                { value: "password" },
-                                { value: "implicit" },
                             ]}
                         />
                     </Form.Item>
