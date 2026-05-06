@@ -170,7 +170,7 @@ const OAuthClientTable = () => {
 
         try {
             if (currentClient) {
-                await updateData("oauth/clients", currentClient.id, payload);
+                await updateData("oauth/clients", currentClient.client_id, payload);
                 message.success("Updated successfully");
             } else {
                 await createData("oauth/clients", payload);
